@@ -226,13 +226,13 @@ class Interaction:
     Label default
     """
     def label(self): 
-        score = 0.0;
+        score = 1.0;
         if self.interaction_type == 1: 
-            score = 10.0
+            score+=1
         elif self.interaction_type == 2 or self.interaction_type == 3:
-            score = 50.0
+            score+=5
         elif self.interaction_type == 5:
-            score = 200.0
+            score+=20
 
         if self.user.premium == 1:
             score = score*2
