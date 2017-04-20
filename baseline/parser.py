@@ -5,6 +5,7 @@ items and user models.
 by Daniel Kohlsdorf
 """
 
+from time import gmtime
 from baseline.model import User, Item, Interaction
 
 
@@ -55,6 +56,7 @@ def build_user(str_user, names):
     Returns a User taking in same paremeter orders as shown in model file.
     """
     return User(
+        int(str_user[names["id"]]),
         [int(x) for x in str_user[names["jobroles"]].split(",") if len(x) > 0],
         int(str_user[names["career_level"]]),
         int(str_user[names["industry_id"]]),
@@ -65,8 +67,9 @@ def build_user(str_user, names):
         int(str_user[names["edu_degree"]]),
         [int(x) for x in str_user[names["edu_fieldofstudies"]].split(",") if len(x) > 0],
         str_user[names["country"]],
-        str_user[names["region"]],
-        str_user[names["wtcj"]]
+        int(str_user[names["region"]]),
+        int(str_user[names["wtcj"]]),
+        int(str_user[names["premium"]])
     )
 
 
@@ -75,16 +78,17 @@ def build_item(str_item, names):
     Returns a Item taking in same paremeter orders as shown in model file.
     """
     return Item(
+        int(str_item[names["id"]]),
         [int(x) for x in str_item[names["title"]].split(",") if len(x) > 0],
         [int(x) for x in str_item[names["tags"]].split(",") if len(x) > 0],
         int(str_item[names["career_level"]]),
         int(str_item[names["industry_id"]]),
         int(str_item[names["discipline_id"]]),
         str_item[names["country"]],
-        str_item[names["region"]],
-        str_item[names["is_payed"]],
-        str_item[names["employment"]],
-        str_item[names["created_at"]]
+        int(str_item[names["region"]]),
+        int(str_item[names["is_payed"]]),
+        int(str_item[names["employment"]]),
+        gmtime(int(str_item[names["created_at"]])) if str_item[names["created_at"]] != "null" else None
     )
 
 
@@ -101,16 +105,14 @@ class InteractionBuilder:
         """
         Returns an Interaction taking in parameters as provided in the Model.
         """
-        if (int(str_inter[names["item_id"]])
-                in self.item_dict
-                and int(str_inter[names["user_id"]])
-                in self.user_dict):
+        if (int(str_inter[names["item_id"]]) in self.item_dict
+                and int(str_inter[names["user_id"]]) in self.user_dict):
             return Interaction(
                 self.user_dict[int(str_inter[names["user_id"]])],
                 self.item_dict[int(str_inter[names["item_id"]])],
                 int(str_inter[names["interaction_type"]]),
-                str_inter[names["created_at"]]
-
+                gmtime(int(str_inter[names["created_at"]]))
             )
         else:
+            print("Interaction not in item or user set.")
             return None

@@ -52,8 +52,9 @@ class User:
     xtcj: xings estimation of 0 or 1 of willingness to change job
     """
 
-    def __init__(self, jobroles, clevel, disc, indus, expn, expy,
-                 expyc, edud, edufos, country, region, xtcj):
+    def __init__(self, id, jobroles, clevel, disc, indus, expn, expy,
+                 expyc, edud, edufos, country, region, xtcj, premium):
+        self.id = id
         self.jobroles = jobroles
         self.clevel = clevel
         self.disc = disc
@@ -66,6 +67,7 @@ class User:
         self.country = country
         self.region = region
         self.xtcj = xtcj
+        self.premium = premium
 
 
 class Item:
@@ -103,8 +105,9 @@ class Item:
     time: python time class of time created
     """
 
-    def __init__(self, title, tags, clevel, indus, disc,
+    def __init__(self, id, title, tags, clevel, indus, disc,
                  country, region, paid, etype, time):
+        self.id = id
         self.title = title
         self.tags = tags
         self.disc = disc
@@ -149,7 +152,7 @@ class Interaction:
                  precentage with item title concepts.
         """
         return float(len(
-            set(self.user.jobroles).intersection(set(self.item.title))))
+            set(self.user.jobroles).intersection(set(self.item.title).union(set(self.item.tags)))))
 
 
     def clevel_match(self):
@@ -161,10 +164,9 @@ class Interaction:
         else:
             return 0.0
 
-
     def indus_match(self):
         """
-        Feature: matching user and item industry
+        feature: matching user and item industry
         """
         if self.user.indus == self.item.indus:
             return 1.0
@@ -177,7 +179,7 @@ class Interaction:
         Feature: matching user and item discipline
         """
         if self.user.disc == self.item.disc:
-            return 2.0
+            return 1.0
         else:
             return 0.0
 
@@ -194,44 +196,19 @@ class Interaction:
 
     def region_match(self):
         """
-        Feature: matching user and item country position and if region is
-                 stated as would be with country de, then match region aswell.
+        Feature: matching user and item region
         """
-        if self.country_match() == 1.0 and self.user.country == "de":
-            if self.user.region == self.item.region:
-                return 1.0
-            else:
-                return 0.75
-        elif self.country_match() == 1.0:
-            return 0.5
+        if self.user.region == self.item.region:
+            return 1.0
         else:
-            return 0
+            return 0.0
 
 
-    def payed_experienced(self):
-        """
-        Feature: match unpayed jobs with beginner career level users.
-        """
-        if self.item.paid == 1:
-            if self.user.clevel > 1:
-                return 1.0
-            else:
-                return 0.5
+    def growth(self):
+        if self.user.expyc > 2 and self.user.clevel == self.item.clevel + 1:
+            return 1.0
         else:
-            if self.user.clevel > 1:
-                return 0.0
-            else:
-                return 0.5
-
-
-    def jobroles_tag_match(self):
-        """
-        Feature: Jaccard similarity of user job roles and item title/tag
-                 features.
-        """
-        jobroles = set(self.user.jobroles)
-        tags = set(self.item.title).union(set(self.item.tags))
-        return float(len(jobroles.intersection(tags)))/float(len(jobroles.union(tags)))
+            return 0.0
 
 
     def features(self):
@@ -241,11 +218,26 @@ class Interaction:
         return [
             self.jobroles_match(), self.clevel_match(), self.indus_match(),
             self.discipline_match(), self.country_match(), self.region_match(),
-            self.payed_experienced(), self.jobroles_tag_match()
+            self.growth(),
         ]
 
-    def label(self):
-        if self.interaction_type == 4:
-            return 0.0
-        else:
-            return 1.0
+
+    """
+    Label default
+    """
+    def label(self): 
+        score = 0.0;
+        if self.interaction_type == 1: 
+            score = 10.0
+        elif self.interaction_type == 2 or self.interaction_type == 3:
+            score = 50.0
+        elif self.interaction_type == 5:
+            score = 200.0
+
+        if self.user.premium == 1:
+            score = score*2
+
+        if self.item.paid == 1:
+            score = score*2
+
+        return score
