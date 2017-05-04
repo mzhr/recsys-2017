@@ -39,6 +39,8 @@ def baseline_parse(data_directory):
         builder.build_interaction,
         lambda x: (int(x[0]), int(x[1]))
     )
+    
+    interactions = builder.user_item_pair
 
     # Build target users as a set ignoring user_id line in the csv file
     target_users = []
@@ -70,7 +72,6 @@ def baseline_learn(users, items, interactions, target_users, target_items, resul
     dataset = xgb.DMatrix(data, label=labels)
     dataset.save_binary("recsys2017.buffer")
 
-
     # Train XGBoost regression model with maximum tree depth of 6 and 50 trees
     evallist = [(dataset, "train")]
     param = {"bst:max_depth": 2, "bst:eta": 0.1, "silent": 1, "objective": "reg:linear"}
@@ -80,7 +81,6 @@ def baseline_learn(users, items, interactions, target_users, target_items, resul
     num_round = 50
     bst = xgb.train(param, dataset, num_round, evallist)
     bst.save_model("recsys2017.model")
-
 
     # Schedule classification
     bucket_size = len(target_items) / n_workers

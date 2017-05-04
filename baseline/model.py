@@ -121,6 +121,12 @@ class Item:
 
 
 class Interaction:
+    def __init__(self, i_type, time):
+        self.i_type = i_type
+        self.time = time
+
+
+class Interactions:
     """
     Model of the interactions hosting all data found in the dataset given in
     the csv. Also contains features to be used in the learning system.
@@ -139,11 +145,10 @@ class Interaction:
     time: python time class of interation
     """
 
-    def __init__(self, user, item, interaction_type, time):
+    def __init__(self, user, item, interactions):
         self.user = user
         self.item = item
-        self.interaction_type = interaction_type
-        self.time = time
+        self.interactions = interactions
 
 
     def jobroles_match(self):
@@ -152,7 +157,7 @@ class Interaction:
                  precentage with item title concepts.
         """
         return float(len(
-            set(self.user.jobroles).intersection(set(self.item.title).union(set(self.item.tags)))))
+            set(self.user.jobroles).intersection(set(self.item.title))))
 
 
     def clevel_match(self):
@@ -172,7 +177,7 @@ class Interaction:
             return 1.0
         else:
             return 0.0
-
+s
 
     def discipline_match(self):
         """
@@ -226,18 +231,22 @@ class Interaction:
     Label default
     """
     def label(self): 
-        score = 1.0;
-        if self.interaction_type == 1: 
-            score+=1
-        elif self.interaction_type == 2 or self.interaction_type == 3:
-            score+=5
-        elif self.interaction_type == 5:
-            score+=20
+        score = 0.0
+        for i in self.interactions:
+            if i.i_type == 1: 
+                score+=1
+            if i.i_type == 2 or i.i_type == 3: 
+                score+=5
+            if i.i_type == 5: 
+                score+=10
 
         if self.user.premium == 1:
             score = score*2
 
         if self.item.paid == 1:
             score = score*2
+
+        if score < 0:
+            score = 0
 
         return score

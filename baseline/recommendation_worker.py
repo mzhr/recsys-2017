@@ -5,7 +5,7 @@ by Daniel Kohlsdorf
 """
 
 from time import time, gmtime
-from baseline.model import Interaction
+from baseline.model import Interaction, Interactions
 import xgboost as xgb
 import numpy as np
 
@@ -27,7 +27,7 @@ def classify_worker(item_ids, target_users, items, users, output_file, model):
 
             # build all (user, item) pair features based for this item
             for user in target_users:
-                interaction = Interaction(users[user], items[item], -1, gmtime(time()))
+                interaction = Interactions(users[user], items[item], [])
                 if interaction.jobroles_match() > 0:
                     features = interaction.features()
                     data += [features]
@@ -35,29 +35,29 @@ def classify_worker(item_ids, target_users, items, users, output_file, model):
 
             if len(data) > 0:
                 # predictions from XGBoost
-                dtest = xgb.DMatrix(np.array(data))
-                ypred = model.predict(dtest)
+                test_matrix = xgb.DMatrix(np.array(data))
+                pred = model.predict(test_matrix)
 
                 # compute average score
-                average_score += sum(ypred)
-                num_evaluated += float(len(ypred))
+                average_score += sum(pred)
+                num_evaluated += float(len(pred))
 
                 # use all items with a score above the given threshold and sort the result
-                user_ids = sorted(
+                pred_ids = sorted(
                     [
-                        (ids_j, ypred_j) for ypred_j, ids_j in zip(ypred, ids) if ypred_j > TH
+                        (ids_p, pred_p) for pred_p, ids_p in zip(pred, ids) if pred_p > TH
                     ],
                     key=(lambda x: -x[1])
                 )[0:99]
 
                 # write the results to file
-                if len(user_ids) > 0:
+                if len(pred_ids) > 0:
                     item_id = str(item) + "\t"
                     file_pointer.write(item_id)
-                    for j in range(0, len(user_ids)):
-                        user_id = str(user_ids[j][0]) + ","
+                    for j in range(0, len(pred_ids)):
+                        user_id = str(pred_ids[j][0]) + ","
                         file_pointer.write(user_id)
-                    user_id = str(user_ids[-1][0]) + "\n"
+                    user_id = str(pred_ids[-1][0]) + "\n"
                     file_pointer.write(user_id)
                     file_pointer.flush()
 

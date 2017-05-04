@@ -6,7 +6,7 @@ by Daniel Kohlsdorf
 """
 
 from time import gmtime
-from baseline.model import User, Item, Interaction
+from baseline.model import User, Item, Interaction, Interactions
 
 
 def is_header(line):
@@ -100,19 +100,23 @@ class InteractionBuilder:
     def __init__(self, user_dict, item_dict):
         self.user_dict = user_dict
         self.item_dict = item_dict
+        self.user_item_pair = {}
 
     def build_interaction(self, str_inter, names):
         """
         Returns an Interaction taking in parameters as provided in the Model.
         """
-        if (int(str_inter[names["item_id"]]) in self.item_dict
-                and int(str_inter[names["user_id"]]) in self.user_dict):
-            return Interaction(
-                self.user_dict[int(str_inter[names["user_id"]])],
-                self.item_dict[int(str_inter[names["item_id"]])],
+        item_id = int(str_inter[names["item_id"]])
+        user_id = int(str_inter[names["user_id"]])
+        if (item_id in self.item_dict and user_id in self.user_dict):
+            i = Interaction(
                 int(str_inter[names["interaction_type"]]),
-                gmtime(int(str_inter[names["created_at"]]))
-            )
+                gmtime(int(str_inter[names["created_at"]])))
+            if (user_id, item_id) in self.user_item_pair:
+                self.user_item_pair[(user_id, item_id)].interactions.append(i)
+            else:
+                self.user_item_pair[(user_id, item_id)] = Interactions(self.user_dict[user_id], self.item_dict[item_id], [i])
+            return i
         else:
             print("Interaction not in item or user set.")
             return None
