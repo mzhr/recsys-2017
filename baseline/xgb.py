@@ -9,7 +9,7 @@ import multiprocessing
 import xgboost as xgb
 import numpy as np
 
-from baseline.parser import select, build_user, build_item, InteractionBuilder
+from baseline.parser import select, build_user, build_item, InteractionBuilder, parse_interactions
 from baseline.recommendation_worker import classify_worker
 
 def baseline_parse(data_directory):
@@ -22,25 +22,28 @@ def baseline_parse(data_directory):
     # Set directory strings
     users_file = data_directory + "/users.csv"
     items_file = data_directory + "/items.csv"
-    interactions_file = data_directory + "/interactions.csv"
     target_users_file = data_directory + "/targetUsers.csv"
     target_items_file = data_directory + "/targetItems.csv"
+    # Minified interactions
+    interactions_file = data_directory + "/minified_interactions.csv"
 
     # Parse users and items into a dictionary each
     (header_users, users) = select(users_file, lambda x: True, build_user, lambda x: int(x[0]))
     (header_items, items) = select(items_file, lambda x: True, build_item, lambda x: int(x[0]))
 
     # Build users containing the class of the item and user of the interactions
-    builder = InteractionBuilder(users, items)
-    (header_interactions, interactions) = select(
-        interactions_file,
-        lambda x: x[2] != "0",
+    #builder = InteractionBuilder(users, items)
+    #(header_interactions, interactions) = select(
+    #    interactions_file,
+    #    lambda x: x[2] != "0",
         #lambda x: True,
-        builder.build_interaction,
-        lambda x: (int(x[0]), int(x[1]))
-    )
+    #    builder.build_interaction,
+    #    lambda x: (int(x[0]), int(x[1]))
+    #)
     
-    interactions = builder.user_item_pair
+    #interactions = builder.user_item_pair
+
+    interactions = parse_interactions(interactions_file, users, items)
 
     # Build target users as a set ignoring user_id line in the csv file
     target_users = []

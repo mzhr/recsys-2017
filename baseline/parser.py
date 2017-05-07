@@ -29,6 +29,28 @@ def process_header(header):
     return col
 
 
+def parse_interactions(from_file, users, items):
+    """
+    Parse data for the minified version of interactions to speed up static pipeline.
+    """
+    interactions = {}
+    lc = 0
+    for line in open(from_file):
+        line = [int(a.strip("(),")) for a in line.split()]
+        assert(len(line)%2 == 0)
+        keys = tuple(line[:2])
+
+        interactions[keys] = Interactions(users[keys[0]], items[keys[1]], [])
+        for n in range(2, len(line), 2):
+            interactions[keys].interactions.append(Interaction(line[n], line[n+1]))
+            
+        if lc % 100000 == 0:
+            print("... reading line " + str(lc) + " from file " + from_file)
+        lc += 1
+
+    return(interactions)
+
+
 def select(from_file, where, to_object, index):
     """
     Retrieves values from csv file.

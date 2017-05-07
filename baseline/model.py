@@ -177,7 +177,7 @@ class Interactions:
             return 1.0
         else:
             return 0.0
-s
+
 
     def discipline_match(self):
         """
