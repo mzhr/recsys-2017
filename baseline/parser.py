@@ -110,7 +110,7 @@ def build_item(str_item, names):
         int(str_item[names["region"]]),
         int(str_item[names["is_payed"]]),
         int(str_item[names["employment"]]),
-        gmtime(int(str_item[names["created_at"]])) if str_item[names["created_at"]] != "null" else None
+        int(str_item[names["created_at"]]) if str_item[names["created_at"]] != "null" else None,
     )
 
 
@@ -133,7 +133,7 @@ class InteractionBuilder:
         if (item_id in self.item_dict and user_id in self.user_dict):
             i = Interaction(
                 int(str_inter[names["interaction_type"]]),
-                gmtime(int(str_inter[names["created_at"]])))
+                int(str_inter[names["created_at"]]))
             if (user_id, item_id) in self.user_item_pair:
                 self.user_item_pair[(user_id, item_id)].interactions.append(i)
             else:

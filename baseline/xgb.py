@@ -81,7 +81,7 @@ def baseline_learn(users, items, interactions, target_users, target_items, resul
     param["nthread"] = 47
     param["eval_metric"] = "rmse"
     param["base_score"] = 0.0
-    num_round = 50
+    num_round = 25
     bst = xgb.train(param, dataset, num_round, evallist)
     bst.save_model("recsys2017.model")
 

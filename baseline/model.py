@@ -153,7 +153,7 @@ class Interactions:
 
     def jobroles_match(self):
         """
-        Feature: [0..1] value of concepts of users jobroles intersection
+        Feature: value of concepts of users jobroles intersection
                  precentage with item title concepts.
         """
         return float(len(
@@ -209,27 +209,29 @@ class Interactions:
             return 0.0
 
 
-    def growth(self):
-        if self.user.expyc > 2 and self.user.clevel == self.item.clevel + 1:
-            return 1.0
-        else:
-            return 0.0
-
-
     def features(self):
         """
         Returns score of the feature values for the user item pair.
         """
         return [
             self.jobroles_match(), self.clevel_match(), self.indus_match(),
-            self.discipline_match(), self.country_match(), self.region_match(),
-            self.growth(),
+            self.discipline_match(), self.country_match(), self.region_match()
         ]
 
+   
+    """
+    Altered Default Label to match updated model data
+    """
+    def label(self):
+        for i in self.interactions:
+            if i.i_type == 4:
+                return 0.0
+        return 1.0
+
 
     """
-    Label default
-    """
+    Label 
+    
     def label(self): 
         score = 0.0
         for i in self.interactions:
@@ -250,3 +252,4 @@ class Interactions:
             score = 0
 
         return score
+    """
