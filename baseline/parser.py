@@ -5,22 +5,13 @@ items and user models.
 by Daniel Kohlsdorf
 """
 
-from time import gmtime
-from baseline.model import User, Item, Interaction, Interactions
-
+from baseline import model
 
 def is_header(line):
-    """
-    Checks if recsyschallenge is in header,
-    all headers in the csv contain this string.
-    """
     return "recsyschallenge" in line
 
 
 def process_header(header):
-    """
-    Processing header into string id"s by removing prefix string.
-    """
     col = {}
     pos = 0
     for name in header:
@@ -30,9 +21,6 @@ def process_header(header):
 
 
 def parse_interactions(from_file, users, items):
-    """
-    Parse data for the minified version of interactions to speed up static pipeline.
-    """
     interactions = {}
     lc = 0
     for line in open(from_file):
@@ -40,21 +28,18 @@ def parse_interactions(from_file, users, items):
         assert(len(line)%2 == 0)
         keys = tuple(line[:2])
 
-        interactions[keys] = Interactions(users[keys[0]], items[keys[1]], [])
+        interactions[keys] = model.Interactions(users[keys[0]], items[keys[1]], [])
         for n in range(2, len(line), 2):
-            interactions[keys].interactions.append(Interaction(line[n], line[n+1]))
+            interactions[keys].interactions.append(model.Interaction(line[n], line[n+1]))
             
+        lc += 1
         if lc % 100000 == 0:
             print("... reading line " + str(lc) + " from file " + from_file)
-        lc += 1
 
     return(interactions)
 
 
 def select(from_file, where, to_object, index):
-    """
-    Retrieves values from csv file.
-    """
     header = None
     data = {}
     i = 0
@@ -74,10 +59,7 @@ def select(from_file, where, to_object, index):
 
 
 def build_user(str_user, names):
-    """
-    Returns a User taking in same paremeter orders as shown in model file.
-    """
-    return User(
+    return model.User(
         int(str_user[names["id"]]),
         [int(x) for x in str_user[names["jobroles"]].split(",") if len(x) > 0],
         int(str_user[names["career_level"]]),
@@ -96,10 +78,7 @@ def build_user(str_user, names):
 
 
 def build_item(str_item, names):
-    """
-    Returns a Item taking in same paremeter orders as shown in model file.
-    """
-    return Item(
+    return model.Item(
         int(str_item[names["id"]]),
         [int(x) for x in str_item[names["title"]].split(",") if len(x) > 0],
         [int(x) for x in str_item[names["tags"]].split(",") if len(x) > 0],
@@ -115,29 +94,22 @@ def build_item(str_item, names):
 
 
 class InteractionBuilder:
-    """
-    Builder class, uses method build_interaction to create interaction object.
-    """
-
     def __init__(self, user_dict, item_dict):
         self.user_dict = user_dict
         self.item_dict = item_dict
         self.user_item_pair = {}
 
     def build_interaction(self, str_inter, names):
-        """
-        Returns an Interaction taking in parameters as provided in the Model.
-        """
         item_id = int(str_inter[names["item_id"]])
         user_id = int(str_inter[names["user_id"]])
         if (item_id in self.item_dict and user_id in self.user_dict):
-            i = Interaction(
+            i = model.Interaction(
                 int(str_inter[names["interaction_type"]]),
                 int(str_inter[names["created_at"]]))
             if (user_id, item_id) in self.user_item_pair:
                 self.user_item_pair[(user_id, item_id)].interactions.append(i)
             else:
-                self.user_item_pair[(user_id, item_id)] = Interactions(self.user_dict[user_id], self.item_dict[item_id], [i])
+                self.user_item_pair[(user_id, item_id)] = model.Interactions(self.user_dict[user_id], self.item_dict[item_id], [i])
             return i
         else:
             print("Interaction not in item or user set.")

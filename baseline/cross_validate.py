@@ -1,5 +1,5 @@
 from time import time
-from baseline import xgb, model
+from ..baseline import xgb, model
 
 def fold10(interactions, fold):
     """

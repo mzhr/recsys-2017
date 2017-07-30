@@ -5,18 +5,17 @@ using XGBoost
 by Daniel Kohlsdorf
 """
 
+
+from baseline import parser
+from baseline import predict_worker
+
 import multiprocessing
+import pathlib
 import xgboost as xgb
 import numpy as np
 
-from baseline.parser import select, build_user, build_item, InteractionBuilder, parse_interactions
-from baseline.recommendation_worker import classify_worker
 
 def baseline_parse(data_directory):
-    """
-    Takes in directory of data and target items to generate recommendations.
-    Parses users, items, interactions, and target items and users.
-    """
     print(" --- Recsys Challenge 2017 Baseline --- ")
 
     # Set directory strings
@@ -28,22 +27,10 @@ def baseline_parse(data_directory):
     interactions_file = data_directory + "/minified_interactions.csv"
 
     # Parse users and items into a dictionary each
-    (header_users, users) = select(users_file, lambda x: True, build_user, lambda x: int(x[0]))
-    (header_items, items) = select(items_file, lambda x: True, build_item, lambda x: int(x[0]))
+    (header_users, users) = parser.select(users_file, lambda x: True, parser.build_user, lambda x: int(x[0]))
+    (header_items, items) = parser.select(items_file, lambda x: True, parser.build_item, lambda x: int(x[0]))
 
-    # Build users containing the class of the item and user of the interactions
-    #builder = InteractionBuilder(users, items)
-    #(header_interactions, interactions) = select(
-    #    interactions_file,
-    #    lambda x: x[2] != "0",
-        #lambda x: True,
-    #    builder.build_interaction,
-    #    lambda x: (int(x[0]), int(x[1]))
-    #)
-    
-    #interactions = builder.user_item_pair
-
-    interactions = parse_interactions(interactions_file, users, items)
+    interactions = parser.parse_interactions(interactions_file, users, items)
 
     # Build target users as a set ignoring user_id line in the csv file
     target_users = []
@@ -61,19 +48,12 @@ def baseline_parse(data_directory):
     return (users, items, interactions, target_users, target_items)
 
 
-def baseline_learn(users, items, interactions, target_users, target_items, result_name):
-    """
-    Processes and learns data set againts features to make list of ranked
-    recommendations.
-    """
-
-    n_workers = 47
-
+def baseline_learn(users, items, interactions, target_users, target_items):
     # Build recsys training data
     data = np.array([interactions[key].features() for key in interactions.keys()])
     labels = np.array([interactions[key].label() for key in interactions.keys()])
     dataset = xgb.DMatrix(data, label=labels)
-    dataset.save_binary("recsys2017.buffer")
+    #dataset.save_binary("recsys2017.buffer")
 
     # Train XGBoost regression model with maximum tree depth of 6 and 50 trees
     evallist = [(dataset, "train")]
@@ -83,7 +63,17 @@ def baseline_learn(users, items, interactions, target_users, target_items, resul
     param["base_score"] = 0.0
     num_round = 25
     bst = xgb.train(param, dataset, num_round, evallist)
-    bst.save_model("recsys2017.model")
+    #bst.save_model("recsys2017.model")
+    #bst = xgb.Booster()
+    #bst.load_model("recsys2017.model")
+
+    return bst
+
+
+def baseline_predict(users, items, target_users, target_items, bst, result_name):
+    n_workers = 47
+
+    pathlib.Path('temp').mkdir(parents=True, exist_ok=True) 
 
     # Schedule classification
     bucket_size = len(target_items) / n_workers
@@ -91,8 +81,8 @@ def baseline_learn(users, items, interactions, target_users, target_items, resul
     jobs = []
     for i in range(0, n_workers):
         stop = int(min(len(target_items), start + bucket_size))
-        filename = "solution_" + str(i) + ".csv"
-        process = multiprocessing.Process(target = classify_worker,
+        filename = "temp/solution_" + str(i) + ".csv"
+        process = multiprocessing.Process(target = predict_worker.worker,
                                           args=(target_items[start:stop],
                                             target_users, items,
                                             users, filename, bst))
@@ -105,8 +95,9 @@ def baseline_learn(users, items, interactions, target_users, target_items, resul
     for j in jobs:
         j.join()
 
-    result_file = open(result_name, "w") 
+    pathlib.Path('solution').mkdir(parents=True, exist_ok=True) 
+    result_file = open("solution/" + result_name, "w") 
     for i in range(0, n_workers):
-        filename = "solution_" + str(i) + ".csv"
+        filename = "temp/solution_" + str(i) + ".csv"
         tempfile = open(filename, "r")
         result_file.write(tempfile.read() + "\n")
