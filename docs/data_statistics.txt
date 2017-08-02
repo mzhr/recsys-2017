@@ -1,0 +1,81 @@
+Things I still need to do
+-------------------------
+- Figuering out Titles, Tags and JobRoles(Users), well over a billion total items in titles alone
+- Relationships between variables
+
+Target Users: 74840, 100% relation to users
+	Target Users with interactions: 62793 or 83.90%
+Users: 1497020, 1193996 or 79.76% have interactions 
+	Career level: 0 - 6, unkown, beginner, junior, expereinced, manager, executive, senior exe
+		0: 537021, 3: 478680, 4: 228961, 6: 107247, 5: 76512, 2: 58386, 1: 10213
+	Discipline types: Unkown what each is, HR, Software Development etc
+		0: 486175, 16: 156798, 7: 117766, 20: 112508, 3: 83591, 15: 68461, 6: 61371, 
+		17: 55906, 8: 49003, 4: 30225, 5: 29927, 14: 28825, 2: 28451, 18: 22284, 
+		21: 22057, 12: 19585, 19: 19353, 13: 17865, 1: 17276, 9: 14956, 10: 14930, 
+		23: 13762, 22: 13553, 11: 12392
+	Industry: Unkown what each is, Finance, Government etc
+		0: 1115980, 5: 61599, 17: 59672, 4: 50388, 3: 27950, 16: 26183, 6: 22102, 
+		21: 17016, 18: 15070, 23: 14127, 11: 12999, 13: 12368, 1: 11850, 8: 7555, 
+		14: 6121, 15: 5686, 22: 5576, 7: 5333, 10: 5013, 2: 4819, 9: 4000, 20: 3447, 
+		19: 1744, 12: 422
+	Experience Counts: 3 = 5+ jobs, 1 = None, 2= in between
+		3: 707693
+		1: 442618
+		2: 346709
+	Experience Years: 0-7 amount of years experience, 7 = 20+ years, 0 = no experience
+		7: 314204, 5: 299196, 4: 274002, 6: 264240, 0: 249662, 3: 57444, 2: 30521, 1: 7751
+	Years in Current: 0-7 years in current/latest job, 7 = 20+ years, 0 = unkown
+		2: 375783, 0: 276629, 4: 251907, 3: 210745, 1: 199939, 5: 89954, 6: 53170, 7: 38893
+	Education Level: 0=Unkown, 1=Bachelor, 2=Masters, 3=PHD
+		0: 967207, 2: 326913, 1: 137464, 3: 65436
+	EDUFOS: Fields of Study, unknown categories, some studied more then 1 field
+		Count of fields: {0: 793331, 1: 595924, 2: 94576, 3: 12077, 4: 1023, 5: 84, 6: 5})
+		Field Types: ({8: 270566, 3: 203507, 5: 153136, 7: 69551, 2: 67927, 4: 28456, 9: 13505, 6: 13358, 1: 5843})
+	Country:
+		{'de': 1235789, 'ch': 102644, 'at': 81270, 'non_dach': 77317}
+	Region: 16 states including 1 meaning non german state
+		{0: 743828, 2: 154763, 9: 141335, 1: 140796, 7: 89656, 10: 70674, 6: 68566, 3: 52683, 13: 10213, 4: 9570, 
+		5: 6364, 8: 2611, 15: 2040, 12: 1854, 11: 1010, 14: 814, 16: 243})
+	XTCJ: xings boolean variable for likely to change jobs
+		({1: 1150295, 0: 346725})
+	PREMIUM: 80.79% of users are ot
+		0: 1209449, 1: 287571
+
+
+Target Items: 46559, 100% relation to items
+	Target Items with interactions: 5512 or 11.84%
+Items: 1306054, 613823 or 46.998% have interactions
+	Career Level:
+		3: 1019199, 1: 131038, 4: 88792, 2: 61713, 5: 4723, 6: 584, 0: 5
+	Indus:
+		16: 366722, 9: 185367, 7: 165991, 4: 101550, 3: 90519, 20: 85888, 1: 42033, 18: 32993, 
+		2: 32662, 5: 31759, 23: 30593, 6: 29502, 17: 26231, 15: 16044, 19: 14483, 
+		8: 13426, 14: 10751, 12: 7786, 21: 6656, 13: 5904, 22: 4077, 10: 3652, 11: 1466})
+	Disc:
+		15: 196559, 8: 131431, 17: 128008, 5: 126616, 13: 101160, 3: 95205, 10: 90855, 
+		11: 84077, 1: 66480, 16: 60468, 18: 41820, 4: 35483, 23: 28118, 21: 27896, 
+		6: 24860, 22: 18315, 7: 17287, 19: 16028, 20: 9615, 14: 4262, 2: 963, 
+		12: 544, 0: 5})
+	Paid: 87.35% of jobs are paid
+		0: 1140779, 1: 165276
+	Country:
+		'de': 1097780, 'ch': 125132, 'at': 76998, 'non_dach': 6144
+	Region: 16 states + non de region?
+		0: 268277 1: 183826, 2: 178160, 9: 156391, 3: 125178, 7: 103736, 10: 76814, 
+		6: 75473, '3: 38688, 4: 34844, 5: 18288, 8: 15149, 14: 8961, 15: 7991, 12: 5510, 
+		11: 4929, 16: 3839
+	Etype: 1=Fulltime, 2=PartTime, 3=contract/freelance, 4=intern, 0=voluntary
+		1: 1179698, 2: 82112, 4: 26589,3: 17583, 0: 72
+
+
+Interactions: 5982813 Interaction builds this but much lower then 322776003 lines in wc?
+	"If item or user in interaction row is not in list then it isn't added"
+	lambda x: x[2] != 0, aka ignores interaction type 0, impressions?
+	0: Most likely the ones being ignored 318895518 plus or minus 1
+	1: 4931649	
+	2: 127417
+	3: 40833
+	4: 880443
+	5: 2471
+
+	Redid and with that line turned into true, there are 26,614,333 total interactions? not sure where the other 300M went

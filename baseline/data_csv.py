@@ -1,26 +1,68 @@
-#!/usr/bin/env python3
+from baseline import learner, model 
 
-"""
-MAZHAR STUFF
-"""
-
-from baseline import xgb, model 
 import csv
-import xgboost
+import xgboost as xgb
 import numpy as np
 
-def minified_interactions(directory):
+def minify_interactions(directory):
     (users, items, 
      interactions, 
      target_users, 
-     target_items) = xgb.baseline_parse(directory)
+     target_items) = learner.baseline_parse(directory)
+
+    interactions = {}
+
+    for line in open(directory + "/interactions.csv"):
+        newline = line.strip()
+        if (newline[0], newline[1]) not in interactions:
+            interactions[(newline[0], newline[1])] = []
+        else:
+            interactions[(newline[0], newline[1])].append(
+                    (newline[2], newline[3])) 
+
+    with open("minified_interactions.csv", "w", newline='') as f:
+        csvwriter = csv.writer(f, delimiter='\t', quotechar='|', quoting=csv.QUOTE_MINIMAL)
+        for key, value in interactions.items():
+            writeline = []
+            writeline.append((newline[0], newline[1]))
+            for i in value:
+                writeline.append(i[0])
+                writeline.append(i[1])
+            csvwriter.writerow(writeline)
+
+def concept_statistics(directory):
+    (users, items, 
+     interactions, 
+     target_users, 
+     target_items) = learner.baseline_parse(directory)
+
+    concept_stats = {}
+    for item in items.items()
+        for c in item.tags:
+            if c in concept_stats:
+                concept_stats[c] = concept_stats[c] + 1
+            else:
+                concept_stats[c] = 1
+        for c in item.title:
+            if c in concept_stats:
+                concept_stats[c] = concept_stats[c] + 1
+            else:
+                concept_stats[c] = 1
+
+    with open("concept_weights.csv", "w", newline='') as f:
+        csvwriter = csv.writer(f, delimiter='\t', quotechar='|', quoting=csv.QUOTE_MINIMAL)
+        for key, value in concept_stats.items():
+            writeline = []
+            writeline.append(key)
+            writeline.append(value)
+            csvwriter.writerow(writeline)
 
 
 def training_csv(directory):
     (users, items, 
      interactions, 
      target_users, 
-     target_items) = xgb.baseline_parse(directory)
+     target_items) = learner.baseline_parse(directory)
 
     with open("label.csv", "w", newline='') as f:
         csvwriter = csv.writer(f, delimiter=' ', quotechar='|', quoting=csv.QUOTE_MINIMAL)
@@ -71,8 +113,8 @@ def target_csv(directory):
     (users, items, 
      interactions, 
      target_users, 
-     target_items) = xgb.baseline_parse(directory)
-    bst = xgb.baseline_learn(users, items, interactions, target_users, target_items)
+     target_items) = learner.baseline_parse(directory)
+    bst = learner.baseline_learn(users, items, interactions, target_users, target_items)
 
     with open("target.csv", "w", newline='') as f:
         csvwriter = csv.writer(f, delimiter=' ', quotechar='|', quoting=csv.QUOTE_MINIMAL)
@@ -89,7 +131,7 @@ def target_csv(directory):
                 target_u_count += 1
                 line = []
                 interaction = model.Interactions(users[user], items[item], [])
-                test_matrix = xgboost.DMatrix(np.array([interaction.features()]))
+                test_matrix = xgb.DMatrix(np.array([interaction.features()]))
                 pred = bst.predict(test_matrix)
 
                 line.append(str(item))
