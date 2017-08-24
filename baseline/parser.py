@@ -88,6 +88,8 @@ def build_item(str_item, names):
         str_item[names["country"]],
         int(str_item[names["region"]]),
         int(str_item[names["is_payed"]]),
+        float(str_item[names["latitude"]]) if str_item[names["latitude"]] != "null" else None,
+        float(str_item[names["longitude"]]) if str_item[names["latitude"]] != "null" else None,
         int(str_item[names["employment"]]),
         int(str_item[names["created_at"]]) if str_item[names["created_at"]] != "null" else None,
     )

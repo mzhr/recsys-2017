@@ -7,12 +7,10 @@ by Daniel Kohlsdorf
 
 from baseline import model
 
-import pathlib
-import math
 import xgboost as xgb
 import numpy as np
 
-def worker(item_ids, target_users, items, users, output_file, bst):
+def worker(item_ids, target_users, items, users, output_file, bst, user_cw, item_cw):
     with open(output_file, "w") as file_pointer:
         pos = 0
         average_score = 0.0
@@ -24,7 +22,7 @@ def worker(item_ids, target_users, items, users, output_file, bst):
             # build all user-feature pairs based for this item
             for user in target_users:
                 interaction = model.Interactions(users[user], items[item], [])
-                data += [interaction.features()]
+                data += [interaction.features(items, user_cw, float(len(users)), item_cw, float(len(items)))]
                 ids += [user]
 
             # predictions from XGBoost
@@ -35,7 +33,7 @@ def worker(item_ids, target_users, items, users, output_file, bst):
 
             # use all items with a score above the given threshold and sort the result
             pred_ids = sorted([
-                    (ids_p, pred_p) for pred_p, ids_p in zip(pred, ids) 
+                    (ids_p, pred_p) for pred_p, ids_p in zip(pred, ids) #if pred_p > 0
                     ], key=(lambda x: -x[1]))[0:99]
 
             # write the results to file

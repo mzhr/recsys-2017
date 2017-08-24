@@ -1,16 +1,38 @@
-#!/usr/bin/env python3
+from baseline import learner, model
 
-"""
-MAZHAR STUFF
-"""
-
-from .baseline import xgb, model
+import csv
 import time
 import numpy as np
 from sklearn.cluster import KMeans
 from sklearn.externals import joblib
 
-start_time = time.time()
+
+def minify_interactions(directory):
+    (users, items, 
+     interactions, 
+     target_users, 
+     target_items) = learner.baseline_parse(directory)
+
+    interactions = {}
+
+    for line in open(directory + "/interactions.csv"):
+        newline = line.strip()
+        if (newline[0], newline[1]) not in interactions:
+            interactions[(newline[0], newline[1])] = []
+        else:
+            interactions[(newline[0], newline[1])].append(
+                    (newline[2], newline[3])) 
+
+    with open("minified_interactions.csv", "w", newline='') as f:
+        csvwriter = csv.writer(f, delimiter='\t', quotechar=' ', quoting=csv.QUOTE_MINIMAL)
+        for key, value in interactions.items():
+            writeline = []
+            writeline.append(key)
+            for i in value:
+                writeline.append(i[0])
+                writeline.append(i[1])
+            csvwriter.writerow(writeline)
+
 
 def create_all():
     (users, items, 

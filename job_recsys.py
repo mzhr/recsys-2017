@@ -2,7 +2,6 @@
 
 
 from baseline import learner
-#from util import cross_validate
 
 import argparse
 import time
@@ -25,10 +24,11 @@ def run():
     (users, items, 
      interactions, 
      target_users, 
-     target_items) = learner.baseline_parse(args.data_directory)
+     target_items,
+     user_cw, item_cw) = learner.baseline_parse(args.data_directory)
     if args.xfold is None:
-        bst = learner.baseline_learn(users, items, interactions, target_users, target_items)
-        learner.baseline_predict(users, items, target_users, target_items, bst, args.name)
+        bst = learner.baseline_learn(users, items, interactions, target_users, target_items, user_cw, item_cw)
+        learner.baseline_predict(users, items, target_users, target_items, bst, args.name, user_cw, item_cw)
 #    else:
 #        cross_validate.fold10(interactions, args.xfold)
 
