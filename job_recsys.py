@@ -20,15 +20,16 @@ def run():
     args = argparser.parse_args()
 
     start_time = time.time()
+    if args.name == None or args.name == "":
+        args.name = "submit" + str(start_time) + ".csv"
 
     (users, items, 
      interactions, 
      target_users, 
-     target_items,
-     user_cw, item_cw) = learner.baseline_parse(args.data_directory)
+     target_items) = learner.baseline_parse(args.data_directory)
     if args.xfold is None:
-        bst = learner.baseline_learn(users, items, interactions, target_users, target_items, user_cw, item_cw)
-        learner.baseline_predict(users, items, target_users, target_items, bst, args.name, user_cw, item_cw)
+        bst = learner.baseline_learn(users, items, interactions, target_users, target_items)
+        learner.baseline_predict(users, items, target_users, target_items, bst, args.name)
 #    else:
 #        cross_validate.fold10(interactions, args.xfold)
 

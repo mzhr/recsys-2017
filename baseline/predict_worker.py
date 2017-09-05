@@ -10,7 +10,7 @@ from baseline import model
 import xgboost as xgb
 import numpy as np
 
-def worker(item_ids, target_users, items, users, output_file, bst, user_cw, item_cw):
+def worker(item_ids, target_users, items, users, output_file, bst):
     with open(output_file, "w") as file_pointer:
         pos = 0
         average_score = 0.0
@@ -22,7 +22,7 @@ def worker(item_ids, target_users, items, users, output_file, bst, user_cw, item
             # build all user-feature pairs based for this item
             for user in target_users:
                 interaction = model.Interactions(users[user], items[item], [])
-                data += [interaction.features(items, user_cw, float(len(users)), item_cw, float(len(items)))]
+                data += [interaction.features(items)]
                 ids += [user]
 
             # predictions from XGBoost

@@ -23,9 +23,9 @@ def baseline_parse(data_directory):
     items_file = data_directory + "/items.csv"
     target_users_file = data_directory + "/targetUsers.csv"
     target_items_file = data_directory + "/targetItems.csv"
-    interactions_file = data_directory + "/minified_interactions.csv"
-    user_interactions_file = data_directory + "/user_interactions.csv"
-    item_interactions_file = data_directory + "/item_interactions.csv"
+    interactions_file = data_directory + "/sampled_interactions.csv"
+    user_interactions_file = data_directory + "/user_interactions"
+    item_interactions_file = data_directory + "/item_interactions"
     item_concept_weights_file = data_directory + "/item_concept_weights.csv"
     user_concept_weights_file = data_directory + "/user_concept_weights.csv"
     item_concept_interactions_file = data_directory + "/item_concept_interactions.csv"
@@ -38,21 +38,35 @@ def baseline_parse(data_directory):
 
     # Parse interacted data
     print("Parsing interacted with items...")
-    for line in open(user_interactions_file):
-        newline = line.split()
-        user = newline[0]
-        newline = newline[1:]
-        for i in newline:
-            users[int(user)].interacted_with += [int(i)]
+    for itype in range(6):
+        for line in open(user_interactions_file + str(itype) + ".csv"):
+            newline = line.split()
+            user = int(newline[0])
+            users[user].interacted_with[itype] = []
+            newline = newline[1:]
+            for i in newline:
+                users[user].interacted_with[itype] += [int(i)]
 
     print("Parsing interacted with users...")
-    for line in open(item_interactions_file):
-        newline = line.split()
-        item = newline[0]
-        newline = newline[1:]
-        for i in newline:
-            items[int(item)].interacted_with += [int(i)]
+    for itype in range(6):
+        for line in open(item_interactions_file + str(itype) + ".csv"):
+            newline = line.split()
+            item = int(newline[0])
+            items[item].interacted_with[itype] = []
+            newline = newline[1:]
+            for i in newline:
+                items[item].interacted_with[itype] += [int(i)]
 
+    for key, value in users.items():
+        for i in range(6):
+            if i not in users[key].interacted_with:
+                users[key].interacted_with[i] = []
+
+    for key, value in items.items():
+        for i in range(6):
+            if i not in items[key].interacted_with:
+                items[key].interacted_with[i] = []
+    """
     # frequency of concepts
     item_concept_weights = {}
     print("Parsing item concept weights...")
@@ -86,6 +100,7 @@ def baseline_parse(data_directory):
         newline = line.split()
         for i in range(1, len(newline), 2):
             users[int(newline[0])].CBF_weights[int(newline[i])] = int(newline[i+1])
+    """
 
     interactions = parser.parse_interactions(interactions_file, users, items)
 
@@ -104,14 +119,14 @@ def baseline_parse(data_directory):
         target_items += [int(line.strip())]
 
     # Return all 5 datasets
-    return (users, items, interactions, target_users, target_items, user_concept_weights, item_concept_weights)
+    return (users, items, interactions, target_users, target_items)
 
 
-def baseline_learn(users, items, interactions, target_users, target_items, user_cw, item_cw):
+def baseline_learn(users, items, interactions, target_users, target_items):
 
     # Build recsys training data
     print("Building data matrix...")
-    data = np.array([interactions[key].features(items, item_cw, float(len(items)), user_cw, float(len(users))) for key in interactions.keys()])
+    data = np.array([interactions[key].features(items) for key in interactions.keys()])
     labels = np.array([interactions[key].label() for key in interactions.keys()])
     dataset = xgb.DMatrix(data, label=labels)
     #dataset.save_binary("recsys2017.buffer")
@@ -121,7 +136,7 @@ def baseline_learn(users, items, interactions, target_users, target_items, user_
     evallist = [(dataset, "train")]
     param = {"bst:max_depth": 15, "bst:eta": 0.1, "bst:colsample_bytree": 0.6, "silent": 1, "objective": "binary:logistic"}
     param["nthread"] = 47
-    param["eval_metric"] = "rmse"
+    param["eval_metric"] = "auc"
     param["base_score"] = 0.1
     num_round = 500
 
@@ -133,8 +148,8 @@ def baseline_learn(users, items, interactions, target_users, target_items, user_
     return bst
 
 
-def baseline_predict(users, items, target_users, target_items, bst, result_name, user_cw, item_cw):
-    n_workers = 47
+def baseline_predict(users, items, target_users, target_items, bst, result_name):
+    n_workers = 471
 
     pathlib.Path('temp').mkdir(parents=True, exist_ok=True) 
 
@@ -148,7 +163,7 @@ def baseline_predict(users, items, target_users, target_items, bst, result_name,
         process = multiprocessing.Process(target = predict_worker.worker,
                                           args=(target_items[start:stop],
                                             target_users, items,
-                                            users, filename, bst, user_cw, item_cw))
+                                            users, filename, bst))
         jobs.append(process)
         start = stop
 

@@ -1,6 +1,8 @@
 from baseline import learner, model, parser 
 
 import csv
+import random
+import time
 import xgboost as xgb
 import numpy as np
 
@@ -20,16 +22,16 @@ def minify_interactions(directory):
         next(fo)
         for line in fo:
             newline = line.strip().split()
-            if (newline[0], newline[1]) not in interactions:
-                interactions[(newline[0], newline[1])] = [(newline[2], newline[3])]
+            if (int(newline[0]), int(newline[1])) not in interactions:
+                interactions[(int(newline[0]), int(newline[1]))] = [(int(newline[2]), int(newline[3]))]
             else:
-                interactions[(newline[0], newline[1])].append(
-                        (newline[2], newline[3])) 
+                interactions[(int(newline[0]), int(newline[1]))].append(
+                        (int(newline[2]), int(newline[3]))) 
 
     with open("minified_interactions.csv", "w", newline='') as f:
         csvwriter = csv.writer(f, delimiter='\t', quotechar=' ', quoting=csv.QUOTE_MINIMAL)
         for key, value in interactions.items():
-            sort = sorted([(item, value) for (item, time) in value], key=(lambda x: -x[1]))
+            sort = sorted([(item, time) for (item, time) in value], key=(lambda x: -x[1]))
             writeline = []
             writeline.append(key[0])
             writeline.append(key[1])
@@ -38,12 +40,75 @@ def minify_interactions(directory):
                 writeline.append(i[1])
             csvwriter.writerow(writeline)
 
-def concept_statistics(directory):
-    (users, items, 
-     interactions, 
-     target_users, 
-     target_items,
-     concept_weights) = learner.baseline_parse(directory)
+def sampled_interactions(directory, p_count, n_count):
+    # Set directory strings
+    users_file = directory + "/users.csv"
+    items_file = directory + "/items.csv"
+    interactions_file = directory + "/minified_interactions.csv"
+
+    # Parse users and items into a dictionary each
+    (header_users, users) = parser.select(users_file, lambda x: True, parser.build_user, lambda x: int(x[0]))
+    (header_items, items) = parser.select(items_file, lambda x: True, parser.build_item, lambda x: int(x[0]))
+    interactions = parser.parse_interactions(interactions_file, users, items)
+
+    sample = {}
+    item_statistics = {}
+    for key, i in items.items():
+        item_statistics[key] = [0,0, []]
+
+    print("Adding recruited and deleted users to set")
+    for key, value in interactions.items():
+        if value.interaction_weight() == -1.0 and item_statistics[key[1]][1] < n_count and key[0] not in item_statistics[key[1]][2]:
+            sample[key] = value
+            item_statistics[key[1]][1] += 1
+            item_statistics[key[1]][2] += [key[0]]
+
+        if value.interaction_weight() == 4.0 and item_statistics[key[1]][0] < p_count and key[0] not in item_statistics[key[1]][2]:
+            sample[key] = value
+            item_statistics[key[1]][0] += 1
+            item_statistics[key[1]][2] += [key[0]]
+
+        if value.interaction_weight() == 3.0 and item_statistics[key[1]][0] < p_count and key[0] not in item_statistics[key[1]][2]:
+            sample[key] = value
+            item_statistics[key[1]][0] += 1
+            item_statistics[key[1]][2] += [key[0]]
+
+        if value.interaction_weight() == 2.0 and item_statistics[key[1]][0] < p_count and key[0] not in item_statistics[key[1]][2]:
+            sample[key] = value
+            item_statistics[key[1]][0] += 1
+            item_statistics[key[1]][2] += [key[0]]
+
+        if value.interaction_weight() == 1.0 and item_statistics[key[1]][0] < p_count and key[0] not in item_statistics[key[1]][2]:
+            sample[key] = value
+            item_statistics[key[1]][0] += 1
+            item_statistics[key[1]][2] += [key[0]]
+ 
+    print("Negative random sampling")
+    list_set = list(users.keys())
+    for key, value in items.items():
+        while item_statistics[key][1] < n_count:
+            u = random.choice(list_set)
+            if u not in item_statistics[key][2] and (u, key) not in sample:
+                sample[(u, key)] = model.Interactions(users[u], items[key], [model.Interaction(4, int(time.time()))])
+                item_statistics[key][1] += 1
+                item_statistics[key][2] += [u]
+
+    with open("sampled_interactions.csv", "w", newline='') as f:
+        csvwriter = csv.writer(f, delimiter='\t', quotechar=' ', quoting=csv.QUOTE_MINIMAL)
+        for key, value in sample.items():
+            sort = sorted(value.interactions, key=(lambda x: -x.time))
+            writeline = []
+            writeline.append(str(key[0]))
+            writeline.append(str(key[1]))
+            for i in sort:
+                writeline.append(str(i.i_type))
+                writeline.append(str(i.time))
+            csvwriter.writerow(writeline)
+
+
+def item_concept_statistics(directory):
+    items_file = directory + "/items.csv"
+    (header_items, items) = parser.select(items_file, lambda x: True, parser.build_item, lambda x: int(x[0]))
 
     item_no = 0
     concept_stats = {}
@@ -65,7 +130,7 @@ def concept_statistics(directory):
             else:
                 concept_stats[c] = count
 
-    with open("concept_weights.csv", "w", newline='') as f:
+    with open("item_concept_weights.csv", "w", newline='') as f:
         csvwriter = csv.writer(f, delimiter='\t', quotechar=' ', quoting=csv.QUOTE_MINIMAL)
         for key, value in concept_stats.items():
             writeline = []
@@ -74,11 +139,8 @@ def concept_statistics(directory):
             csvwriter.writerow(writeline)
 
 def user_concept_statistics(directory):
-    (users, items, 
-     interactions, 
-     target_users, 
-     target_items,
-     concept_weights) = learner.baseline_parse(directory)
+    users_file = directory + "/users.csv"
+    (header_users, users) = parser.select(users_file, lambda x: True, parser.build_user, lambda x: int(x[0]))
 
     user_no = 0
     concept_stats = {}
@@ -103,11 +165,12 @@ def user_concept_statistics(directory):
 
 
 def user_interaction_concept_statistics(directory):
-    (users, items, 
-     interactions, 
-     target_users, 
-     target_items,
-     concept_weights) = learner.baseline_parse(directory)
+    users_file = directory + "/users.csv"
+    items_file = directory + "/items.csv"
+    interactions_file = directory + "/minified_interactions.csv"
+    (header_users, users) = parser.select(users_file, lambda x: True, parser.build_user, lambda x: int(x[0]))
+    (header_items, items) = parser.select(items_file, lambda x: True, parser.build_item, lambda x: int(x[0]))
+    interactions = parser.parse_interactions(interactions_file, users, items)
 
     interaction_no = 0
 
@@ -155,12 +218,14 @@ def user_interaction_concept_statistics(directory):
                 writeline.append(str(count))
             csvwriter.writerow(writeline)
 
+
 def item_interaction_concept_statistics(directory):
-    (users, items, 
-     interactions, 
-     target_users, 
-     target_items,
-     concept_weights) = learner.baseline_parse(directory)
+    users_file = directory + "/users.csv"
+    items_file = directory + "/items.csv"
+    interactions_file = directory + "/minified_interactions.csv"
+    (header_users, users) = parser.select(users_file, lambda x: True, parser.build_user, lambda x: int(x[0]))
+    (header_items, items) = parser.select(items_file, lambda x: True, parser.build_item, lambda x: int(x[0]))
+    interactions = parser.parse_interactions(interactions_file, users, items)
 
     interaction_no = 0
 
@@ -286,11 +351,12 @@ def target_csv(directory):
                 line.append(str(pred))
                 csvwriter.writerow(line)
 
+
 def interacted_with(directory):
     # Set directory strings
     users_file = directory + "/users.csv"
     items_file = directory + "/items.csv"
-    interactions_file = directory + "/minified_interactions.csv"
+    interactions_file = directory + "/sampled_interactions.csv"
 
     # Parse users and items into a dictionary each
     (header_users, users) = parser.select(users_file, lambda x: True, parser.build_user, lambda x: int(x[0]))
@@ -298,48 +364,226 @@ def interacted_with(directory):
 
     interactions = parser.parse_interactions(interactions_file, users, items)
 
-    item_interactions = {}
-    user_interactions = {}
+    item_interactions0 = {}
+    item_interactions1 = {}
+    item_interactions2 = {}
+    item_interactions3 = {}
+    item_interactions4 = {}
+    item_interactions5 = {}
+    user_interactions0 = {}
+    user_interactions1 = {}
+    user_interactions2 = {}
+    user_interactions3 = {}
+    user_interactions4 = {}
+    user_interactions5 = {}
 
     for key, value in interactions.items():
-        most_recent = 0
+        most_recent0 = 0
+        most_recent1 = 0
+        most_recent2 = 0
+        most_recent3 = 0
+        most_recent4 = 0
+        most_recent5 = 0
         for i in value.interactions:
-            if i.time > most_recent:
-                most_recent = i.time
+            if i.i_type == 0 and i.time > most_recent0:
+                most_recent0 = i.time
+            if i.i_type == 1 and i.time > most_recent1:
+                most_recent1 = i.time
+            if i.i_type == 2 and i.time > most_recent2:
+                most_recent2 = i.time
+            if i.i_type == 3 and i.time > most_recent3:
+                most_recent3 = i.time
+            if i.i_type == 4 and i.time > most_recent4:
+                most_recent4 = i.time
+            if i.i_type == 5 and i.time > most_recent5:
+                most_recent5 = i.time
 
-        if key[0] in user_interactions:
-            user_interactions[key[0]].add((key[1], time))
-        else: 
-            user_interactions[key[0]] = set(([key[1]], time))
+        for i in value.interactions:
+            if i.i_type == 0:
+                if key[0] in user_interactions0:
+                    user_interactions0[key[0]] += [(key[1], most_recent0)]
+                else: 
+                    user_interactions0[key[0]] = [(key[1], most_recent0)]
+            elif i.i_type == 1:
+                if key[0] in user_interactions1:
+                    user_interactions1[key[0]] += [(key[1], most_recent1)]
+                else: 
+                    user_interactions1[key[0]] = [(key[1], most_recent1)]
+            elif i.i_type == 2:
+                if key[0] in user_interactions2:
+                    user_interactions2[key[0]] += [(key[1], most_recent2)]
+                else: 
+                    user_interactions2[key[0]] = [(key[1], most_recent2)]
+            elif i.i_type == 3:
+                if key[0] in user_interactions3:
+                    user_interactions3[key[0]] += [(key[1], most_recent3)]
+                else: 
+                    user_interactions3[key[0]] = [(key[1], most_recent3)]
+            elif i.i_type == 4:
+                if key[0] in user_interactions4:
+                    user_interactions4[key[0]] += [(key[1], most_recent4)]
+                else: 
+                    user_interactions4[key[0]] = [(key[1], most_recent4)]
+            elif i.i_type == 5:
+                if key[0] in user_interactions5:
+                    user_interactions5[key[0]] += [(key[1], most_recent5)]
+                else: 
+                    user_interactions5[key[0]] = [(key[1], most_recent5)]
+ 
+            if i.i_type == 0:
+                if key[1] in item_interactions0:
+                    item_interactions0[key[1]] += [(key[0], most_recent0)]
+                else: 
+                    item_interactions0[key[1]] = [(key[0], most_recent0)]
+            elif i.i_type == 1:
+                if key[1] in item_interactions1:
+                    item_interactions1[key[1]] += [(key[0], most_recent1)]
+                else: 
+                    item_interactions1[key[1]] = [(key[0], most_recent1)]
+            elif i.i_type == 2:
+                if key[1] in item_interactions2:
+                    item_interactions2[key[1]] += [(key[0], most_recent2)]
+                else: 
+                    item_interactions2[key[1]] = [(key[0], most_recent2)]
+            elif i.i_type == 3:
+                if key[1] in item_interactions3:
+                    item_interactions3[key[1]] += [(key[0], most_recent3)]
+                else: 
+                    item_interactions3[key[1]] = [(key[0], most_recent3)]
+            elif i.i_type == 4:
+                if key[1] in item_interactions4:
+                    item_interactions4[key[1]] += [(key[0], most_recent4)]
+                else: 
+                    item_interactions4[key[1]] = [(key[0], most_recent4)]
+            elif i.i_type == 5:
+                if key[1] in item_interactions5:
+                    item_interactions5[key[1]] += [(key[0], most_recent5)]
+                else: 
+                    item_interactions5[key[1]] = [(key[0], most_recent5)]
 
-        if key[1] in item_interactions:
-            item_interactions[key[1]].add((key[0], time))
-        else: 
-            item_interactions[key[1]] = set(([key[0]], time))
+    for key, value in user_interactions0.items():
+            sort = sorted([(item, time) for (item, time) in value], key=(lambda x: -x[1]))
+            user_interactions0[key] = [item for item, time in sort]
+    for key, value in user_interactions1.items():
+            sort = sorted([(item, time) for (item, time) in value], key=(lambda x: -x[1]))
+            user_interactions1[key] = [item for item, time in sort]
+    for key, value in user_interactions2.items():
+            sort = sorted([(item, time) for (item, time) in value], key=(lambda x: -x[1]))
+            user_interactions2[key] = [item for item, time in sort]
+    for key, value in user_interactions3.items():
+            sort = sorted([(item, time) for (item, time) in value], key=(lambda x: -x[1]))
+            user_interactions3[key] = [item for item, time in sort]
+    for key, value in user_interactions4.items():
+            sort = sorted([(item, time) for (item, time) in value], key=(lambda x: -x[1]))
+            user_interactions4[key] = [item for item, time in sort]
+    for key, value in user_interactions5.items():
+            sort = sorted([(item, time) for (item, time) in value], key=(lambda x: -x[1]))
+            user_interactions5[key] = [item for item, time in sort]
 
-    for key, value in item_interactions.items():
-        sort = sorted([item for item, time in value], key=(lambda x: -x[1]))
-        item_interactions[key] = [item for item, time in sort]
+    for key, value in item_interactions0.items():
+            sort = sorted([(item, time) for (item, time) in value], key=(lambda x: -x[1]))
+            item_interactions0[key] = [item for item, time in sort]
+    for key, value in item_interactions1.items():
+            sort = sorted([(item, time) for (item, time) in value], key=(lambda x: -x[1]))
+            item_interactions1[key] = [item for item, time in sort]
+    for key, value in item_interactions2.items():
+            sort = sorted([(item, time) for (item, time) in value], key=(lambda x: -x[1]))
+            item_interactions2[key] = [item for item, time in sort]
+    for key, value in item_interactions3.items():
+            sort = sorted([(item, time) for (item, time) in value], key=(lambda x: -x[1]))
+            item_interactions3[key] = [item for item, time in sort]
+    for key, value in item_interactions4.items():
+            sort = sorted([(item, time) for (item, time) in value], key=(lambda x: -x[1]))
+            item_interactions4[key] = [item for item, time in sort]
+    for key, value in item_interactions5.items():
+            sort = sorted([(item, time) for (item, time) in value], key=(lambda x: -x[1]))
+            item_interactions5[key] = [item for item, time in sort]
 
-    for key, value in user_interactions.items():
-        sort = sorted([item for item, time in value], key=(lambda x: -x[1]))
-        user_interactions[key] = [item for item, time in sort]
-       
-    with open("user_interactions.csv", "w") as userf:
-        for key, value in user_interactions.items():
+    with open("user_interactions0.csv", "w") as userf0:
+        for key, value in user_interactions0.items():
             string = str(key)
             for v in value:
                 string += " " + str(v)
             string += "\n"
-            userf.write(string)
+            userf0.write(string)
+    with open("user_interactions1.csv", "w") as userf1:
+        for key, value in user_interactions1.items():
+            string = str(key)
+            for v in value:
+                string += " " + str(v)
+            string += "\n"
+            userf1.write(string)
+    with open("user_interactions2.csv", "w") as userf2:
+        for key, value in user_interactions2.items():
+            string = str(key)
+            for v in value:
+                string += " " + str(v)
+            string += "\n"
+            userf2.write(string)
+    with open("user_interactions3.csv", "w") as userf3:
+        for key, value in user_interactions3.items():
+            string = str(key)
+            for v in value:
+                string += " " + str(v)
+            string += "\n"
+            userf3.write(string)
+    with open("user_interactions4.csv", "w") as userf4:
+        for key, value in user_interactions4.items():
+            string = str(key)
+            for v in value:
+                string += " " + str(v)
+            string += "\n"
+            userf4.write(string)
+    with open("user_interactions5.csv", "w") as userf5:
+        for key, value in user_interactions5.items():
+            string = str(key)
+            for v in value:
+                string += " " + str(v)
+            string += "\n"
+            userf5.write(string)
             
-    with open("item_interactions.csv", "w") as userf:
-        for key, value in item_interactions.items():
+    with open("item_interactions0.csv", "w") as itemf0:
+        for key, value in item_interactions0.items():
             string = str(key)
             for v in value:
                 string += " " + str(v)
             string += "\n"
-            userf.write(string)
+            itemf0.write(string)
+    with open("item_interactions1.csv", "w") as itemf1:
+        for key, value in item_interactions1.items():
+            string = str(key)
+            for v in value:
+                string += " " + str(v)
+            string += "\n"
+            itemf1.write(string)
+    with open("item_interactions2.csv", "w") as itemf2:
+        for key, value in item_interactions2.items():
+            string = str(key)
+            for v in value:
+                string += " " + str(v)
+            string += "\n"
+            itemf2.write(string)
+    with open("item_interactions3.csv", "w") as itemf3:
+        for key, value in item_interactions3.items():
+            string = str(key)
+            for v in value:
+                string += " " + str(v)
+            string += "\n"
+            itemf3.write(string)
+    with open("item_interactions4.csv", "w") as itemf4:
+        for key, value in item_interactions4.items():
+            string = str(key)
+            for v in value:
+                string += " " + str(v)
+            string += "\n"
+            itemf4.write(string)
+    with open("item_interactions5.csv", "w") as itemf5:
+        for key, value in item_interactions5.items():
+            string = str(key)
+            for v in value:
+                string += " " + str(v)
+            string += "\n"
+            itemf5.write(string)
 
 
 def onehotmodel_generater(directory):
