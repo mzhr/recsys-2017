@@ -23,12 +23,13 @@ def process_header(header):
 def parse_interactions(from_file, users, items):
     interactions = {}
     lc = 0
+    dicts = model.data_dict()
     for line in open(from_file):
         line = [int(a.strip("(),")) for a in line.split()]
         assert(len(line)%2 == 0)
         keys = tuple(line[:2])
 
-        interactions[keys] = model.Interactions(users[keys[0]], items[keys[1]], [])
+        interactions[keys] = model.Interactions(users[keys[0]], items[keys[1]], [], dicts)
         for n in range(2, len(line), 2):
             interactions[keys].interactions.append(model.Interaction(line[n], line[n+1]))
             
@@ -102,6 +103,7 @@ class InteractionBuilder:
         self.user_item_pair = {}
 
     def build_interaction(self, str_inter, names):
+        dicts = model.data_dicts()
         item_id = int(str_inter[names["item_id"]])
         user_id = int(str_inter[names["user_id"]])
         if (item_id in self.item_dict and user_id in self.user_dict):
@@ -111,7 +113,7 @@ class InteractionBuilder:
             if (user_id, item_id) in self.user_item_pair:
                 self.user_item_pair[(user_id, item_id)].interactions.append(i)
             else:
-                self.user_item_pair[(user_id, item_id)] = model.Interactions(self.user_dict[user_id], self.item_dict[item_id], [i])
+                self.user_item_pair[(user_id, item_id)] = model.Interactions(self.user_dict[user_id], self.item_dict[item_id], [i], dicts)
             return i
         else:
             print("Interaction not in item or user set.")

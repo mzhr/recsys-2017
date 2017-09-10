@@ -3,6 +3,7 @@ from baseline import learner, model, parser
 import csv
 import random
 import time
+from collections import Counter
 import xgboost as xgb
 import numpy as np
 
@@ -29,7 +30,7 @@ def minify_interactions(directory):
                         (int(newline[2]), int(newline[3]))) 
 
     with open("minified_interactions.csv", "w", newline='') as f:
-        csvwriter = csv.writer(f, delimiter='\t', quotechar=' ', quoting=csv.QUOTE_MINIMAL)
+        csvwriter = csv.writer(f, delimiter='\t', quoting=csv.QUOTE_NONE)
         for key, value in interactions.items():
             sort = sorted([(item, time) for (item, time) in value], key=(lambda x: -x[1]))
             writeline = []
@@ -39,6 +40,7 @@ def minify_interactions(directory):
                 writeline.append(i[0])
                 writeline.append(i[1])
             csvwriter.writerow(writeline)
+
 
 def sampled_interactions(directory, p_count, n_count):
     # Set directory strings
@@ -352,6 +354,24 @@ def target_csv(directory):
                 csvwriter.writerow(line)
 
 
+def build_cache(directory):
+    (users, items, 
+     interactions, 
+     target_users, 
+     target_items) = learner.baseline_parse(directory)
+
+    with open("target.csv", "w", newline='') as f:
+        csvwriter = csv.writer(f, delimiter=' ', quoting=csv.QUOTE_NONE)
+        dicts = model.data_dicts() 
+        for user, u in users.items():
+            for item, i in items.items():
+                line = []
+                interaction = model.Interactions(u, i, [], dicts)
+                line.append(user)
+                line.append(item)
+                line.append(','.join(str(a) for a in interaction.features()))
+                csvwriter.writerow(line)
+
 def interacted_with(directory):
     # Set directory strings
     users_file = directory + "/users.csv"
@@ -585,126 +605,150 @@ def interacted_with(directory):
             string += "\n"
             itemf5.write(string)
 
+##KJASDNSAKJNDSAKJDNKJASD
+def concept_onehotlist(directory):
+    with open("concept_onehot.txt", "w") as f:
+        sentence = ""
+        for line in open(directory + "/item_concept_weights.csv"):
+            newline = line.split() 
+            if int(newline[1]) > 500: 
+                sentence += newline[1] + ","
+            if len(sentence) > 50:
+                f.write(sentence+"\n")
+                sentence = ""
+        f.write(sentence)
+        f.write("\n\n]")
 
-def onehotmodel_generater(directory):
-    user_attr = {"clevel": [0,1,2,3,4,5,6],
-        "disc":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23],
-        "indus":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23],
-        "expn": [0,1,2,3],
-        "expy": [0,1,2,3,4,5,6],
-        "expyc": [0,1,2,3,4,5,6],
-        "edud": [0,1,2,3],
-        "country": ['"de"','"at"','"ch"','"non dach"'],
-        "region": [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16],
-        "xtcj": [0,1]}
-
-    user_array_attr = {
-        "edufos": [1,2,3,4,5,6,7,8,9],
-        "jobroles": []}
-
-    item_attr = {"clevel": [0,1,2,3,4,5,6],
-        "disc":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23],
-        "indus":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23],
-        "country": ['"de"','"at"','"ch"','"non dach"'],
-        "region": [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16],
-        "paid": [0,1],
-        "etype":[1,2,3,4],
-        "lat": [52.5,48.2,None,53.6,50.1,47.4,48.8,50.9,51.2,48.1,51.5,49.5,52.4,51.1,51.4,
-                49.0,48.7,51.3,50.8,47.6,50.0,48.4,51.0,53.5,53.1,52.3,50.7,48.0,52.0,47.2,47.1,
-                48.3,47.8,46.9,48.9,47.5,47.7,49.9,48.5,47.0,49.2,50.6,49.8,47.3,49.4,52.1,51.7,
-                49.1,52.2,48.6,51.6,47.9,51.8,49.3,50.2,50.4,49.6,53.7,51.9,54.3,50.3,53.9,54.1,
-                53.2,49.7,46.8,53.8,52.6,53.3,53.4,50.5,53.0,52.7,46.6,52.8,52.9,46.2,54.8,54.2,
-                46.7,46.5,54.5,54.0,54.4,46.3],
-        "lon": [13.4,11.6,None,8.7,10.0,8.5,9.2,7.0,6.8,9.7,8.8,8.4,7.6,8.6,8.3,16.4,7.2,11.1,7.5,
-                13.1,7.1,12.4,7.9,7.4,9.5,10.1,11.0,9.9,11.4,12.1,8.2,8.1,9.1,13.8,8.9,7.3,10.9,9.0,9.3,
-                9.4,10.2,7.8,9.8,8.0,10.3,10.5,11.7,6.9,13.0,9.6,10.8,6.1,6.6,10.7,12.9,14.3,13.7,12.2,
-                7.7,11.5,11.3,12.0,11.9,10.4,6.7,11.8,10.6,12.5,16.2,12.6,13.3,11.2,16.3,13.5,12.8,6.4,
-                15.4,12.3,12.7,13.9,14.0,14.6,13.6,13.2,6.5,14.4,15.6,6.3,14.2,6.2,15.5,14.1,14.5,15.0,
-                15.7,15.3]}
-
-    item_array_attr = {
-        "title": [],
-        "tags": []}
-
-    for line in open(directory + "/item_concept_weights.csv"):
-        newline = line.split() 
-        if int(newline[1]) > 500: 
-            user_array_attr["jobroles"] += [int(newline[0])]
-
-    # frequency of concepts
-    for line in open(directory + "/user_concept_weights.csv"):
-        newline = line.split() 
-        if int(newline[1]) > 500: 
-            item_array_attr["title"] += [int(newline[0])]
-            item_array_attr["tags"] += [int(newline[0])]
-
-    feature_count = 0
-    with open("onehotmodel.txt", "w") as f:
-        for key, values in user_attr.items():
-            count = 0
-            for attr in values:
-                f.write("\tdef user_" + str(key) + str(count) + "(self):\n")
-                f.write("\t\tif self.user." + str(key) + " == " + str(attr) + ":\n")
-                f.write("\t\t\treturn 1.0\n")
-                f.write("\t\telse:\n")
-                f.write("\t\t\treturn 0.0\n\n")
-                count += 1
-                feature_count +=1
-
-        for key, values in user_array_attr.items():
-            for attr in values:
-                f.write("\tdef user_" + str(key) + str(attr) + "(self):\n")
-                f.write("\t\tif " + str(attr) + " in self.user." + str(key) + ":\n")
-                f.write("\t\t\treturn 1.0\n")
-                f.write("\t\telse:\n")
-                f.write("\t\t\treturn 0.0\n\n")
-                feature_count +=1
-        
-        for key, values in item_attr.items():
-            count = 0
-            for attr in values:
-                f.write("\tdef item_" + str(key) + str(count) + "(self):\n")
-                f.write("\t\tif self.item." + str(key) + " == " + str(attr) + ":\n")
-                f.write("\t\t\treturn 1.0\n")
-                f.write("\t\telse:\n")
-                f.write("\t\t\treturn 0.0\n\n")
-                count += 1
-                feature_count +=1
-
-        for key, values in item_array_attr.items():
-            for attr in values:
-                f.write("\tdef user_" + str(key) + str(attr) + "(self):\n")
-                f.write("\t\tif self.item." + str(key) + " == " + str(attr) + ":\n")
-                f.write("\t\t\treturn 1.0\n")
-                f.write("\t\telse:\n")
-                f.write("\t\t\treturn 0.0\n\n")
-                feature_count +=1
-
-        for key, values in user_attr.items():
-            count = 0
-            for attr in values:
-                f.write("\t\t\tself.user_" + str(key) + str(count) + "(),\n")
-                count += 1
-
-        for key, values in user_array_attr.items():
-            for attr in values:
-                f.write("\t\t\tself.user_" + str(key) + str(attr) + "(),\n")
-
-        for key, values in item_attr.items():
-            count = 0
-            for attr in values:
-                f.write("\t\t\tself.item_" + str(key) + str(count) + "(),\n")
-                count += 1
-
-        for key, values in item_array_attr.items():
-            for attr in values:
-                f.write("\t\t\tself.user_" + str(key) + str(attr) + "(),\n")
-
-        print(feature_count)
+        # frequency of concepts
+        sentence = ""
+        for line in open(directory + "/user_concept_weights.csv"):
+            newline = line.split() 
+            if int(newline[1]) > 500: 
+                sentence += newline[1] + ","
+            if len(sentence) > 50:
+                f.write(sentence+"\n")
+                sentence = ""
+        f.write(sentence)
 
 def build_visualisations(directory):
     (users, items, interactions, 
-     target_users, target_items, 
-     user_cw, item_cw) = learner.baseline_parse(directory)
+     target_users, target_items) = learner.baseline_parse(directory)
 
+    user_stats = {"clevel": [], 
+                  "disc": [],
+                  "indus": [],
+                  "expn": [],
+                  "expy": [],
+                  "expyc": [],
+                  "edud": [],
+                  "country": [],
+                  "region": [],
+                  "xtcj": [],
+                  "jobroles_values": [],
+                  "jobroles_count": [],
+                  "edufos_values": [],
+                  "edufos_count": [],
+                  "premium": []} 
 
+    item_stats = {"title_values": [],
+                  "title_count": [],
+                  "tags_values": [],
+                  "tags_count": [],
+                  "disc": [],
+                  "indus": [],
+                  "latlon": [],
+                  "clevel": [],
+                  "country": [],
+                  "region": [],
+                  "paid": [],
+                  "time": [],
+                  "etype": []}
+                  
+    target_items_intersect = 0
+    target_users_intersect = 0
+    users_length = len(users)
+    items_length = len(items)
+    target_items_length = len(target_items)
+    target_users_length = len(target_users)
+    target_items_not_in_set = 0
+    target_users_not_in_set = 0
+    interaction_type = []
+    interaction_count = []
+    target_user_interactions = set()
+    target_item_interactions = set()
+    user_interactions = set()
+    item_interactions = set()
+    
+    for user, value in users.items():
+        for c in value.jobroles:
+            user_stats["jobroles_values"] += [c]
+        user_stats["jobroles_count"] += [len(value.jobroles)]
+        for c in value.edufos:
+            user_stats["edufos_values"] += [c]
+        user_stats["edufos_count"] += [len(value.edufos)]
+        user_stats["clevel"] += [value.clevel]
+        user_stats["disc"] += [value.disc]
+        user_stats["indus"] += [value.indus]
+        user_stats["expn"] += [value.expn]
+        user_stats["expy"] += [value.expy]
+        user_stats["expyc"] += [value.expyc]
+        user_stats["edud"] += [value.edud]
+        user_stats["country"] += [value.country]
+        user_stats["region"] += [value.region]
+        user_stats["xtcj"] += [value.xtcj]
+        user_stats["premium"] += [value.premium]
+        if user in target_users:
+            target_user_intersect += 1
+
+    for u in target_users:
+        if u not in users:
+            target_users_not_in_set += 1
+
+    for item, value in items.items():
+        for c in value.title:
+            item_stats["title_values"] += [c]
+        item_stats["title_count"] += [len(value.title)]
+        for c in value.tags:
+            item_stats["tags_values"] += [c]
+        user_stats["tags_count"] += [len(value.tags)]
+        item_stats["disc"] += [value.disc]
+        item_stats["indus"] += [value.indus]
+        item_stats["clevel"] += [value.clevel]
+        item_stats["country"] += [value.country]
+        item_stats["region"] += [value.region]
+        item_stats["paid"] += [value.paid]
+        item_stats["etype"] += [value.etype]
+        item_stats["time"] += [value.time]
+        item_stats["latlon"] += [(value.lat, value.lon)]
+        if item in target_item:
+            target_item_intersect += 1
+
+    for i in target_items:
+        if i not in items:
+            target_items_not_in_set += 1
+
+    for key, value in interactions.items():
+        interaction_count += [len(value.interactions)]
+        for i in value.interactions:
+            interaction_type += [i.i_type]
+        if value.user.id in target_users:
+            target_users_interactions.add(value.user.id)
+        if value.item.id in target_items:
+            target_items_interactions.add(value.item.id)
+        if value.item.id in items:
+            item_interactions.add(value.item.id)
+        if value.user.id in users:
+            user_interactions.add(value.user.id)
+
+    for key, value in user_stats.items():
+        user_stats[key] = Counter(value)
+    for key, value in item_stats.items():
+        item_stats[key] = Counter(value)
+
+    interaction_type = Counter(interaction_type)
+    interaction_count = Counter(interaction_count)
+    interaction_count = Counter(interaction_count)
+    target_user_interactions = len(target_user_interactions)
+    target_item_interactions = len(target_item_interactions)
+    user_interactions = len(user_interactions)
+    item_interactions = len(item_interactions)

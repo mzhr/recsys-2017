@@ -23,7 +23,7 @@ def baseline_parse(data_directory):
     items_file = data_directory + "/items.csv"
     target_users_file = data_directory + "/targetUsers.csv"
     target_items_file = data_directory + "/targetItems.csv"
-    interactions_file = data_directory + "/sampled_interactions.csv"
+    interactions_file = data_directory + "/1minified_interactions.csv"
     user_interactions_file = data_directory + "/user_interactions"
     item_interactions_file = data_directory + "/item_interactions"
     item_concept_weights_file = data_directory + "/item_concept_weights.csv"
@@ -57,6 +57,7 @@ def baseline_parse(data_directory):
             for i in newline:
                 items[item].interacted_with[itype] += [int(i)]
 
+    print("Building unbuilt interaction lists...")
     for key, value in users.items():
         for i in range(6):
             if i not in users[key].interacted_with:
@@ -101,7 +102,8 @@ def baseline_parse(data_directory):
         for i in range(1, len(newline), 2):
             users[int(newline[0])].CBF_weights[int(newline[i])] = int(newline[i+1])
     """
-
+    
+    print("Parsing Interactions")
     interactions = parser.parse_interactions(interactions_file, users, items)
 
     # Build target users as a set ignoring user_id line in the csv file
@@ -179,3 +181,28 @@ def baseline_predict(users, items, target_users, target_items, bst, result_name)
         filename = "temp/solution_" + str(i) + ".csv"
         tempfile = open(filename, "r")
         result_file.write(tempfile.read() + "\n")
+"""
+def build_cache(users, items, interactions, target_users, target_items):
+    n_workers = 47
+
+    # Schedule classification
+    bucket_size = len(target_items) / n_workers
+    start = 0
+    jobs = []
+    for i in range(0, n_workers):
+        stop = int(min(len(target_items), start + bucket_size))
+        filename = "temp/solution_" + str(i) + ".csv"
+        process = multiprocessing.Process(target = predict_worker.worker,
+                                          args=(target_items[start:stop],
+                                            target_users, items,
+                                            users, filename, bst))
+        jobs.append(process)
+        start = stop
+
+    for j in jobs:
+        j.start()
+
+    for j in jobs:
+        j.join()
+"""
+
