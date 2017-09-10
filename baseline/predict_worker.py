@@ -12,6 +12,7 @@ import numpy as np
 
 def worker(item_ids, target_users, items, users, output_file, bst):
     with open(output_file, "w") as file_pointer:
+        dicts = model.data_dicts()
         pos = 0
         average_score = 0.0
         num_evaluated = 0.0
@@ -21,7 +22,7 @@ def worker(item_ids, target_users, items, users, output_file, bst):
 
             # build all user-feature pairs based for this item
             for user in target_users:
-                interaction = model.Interactions(users[user], items[item], [])
+                interaction = model.Interactions(users[user], items[item], [], dicts)
                 data += [interaction.features(items)]
                 ids += [user]
 
