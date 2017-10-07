@@ -3,8 +3,12 @@ from baseline import learner, model, parser
 import csv
 import random
 import time
+from collections import Counter
 import xgboost as xgb
 import numpy as np
+import matplotlib.pyplot as plt
+import multiprocessing
+import pathlib
 
 def minify_interactions(directory):
     # Set directory strings
@@ -46,10 +50,46 @@ def sampled_interactions(directory, p_count, n_count):
     users_file = directory + "/users.csv"
     items_file = directory + "/items.csv"
     interactions_file = directory + "/minified_interactions.csv"
+    user_interactions_file = directory + "/user_interactions"
+    item_interactions_file = directory + "/item_interactions"
 
     # Parse users and items into a dictionary each
+
+    print("Parsing Items and Users...")
     (header_users, users) = parser.select(users_file, lambda x: True, parser.build_user, lambda x: int(x[0]))
     (header_items, items) = parser.select(items_file, lambda x: True, parser.build_item, lambda x: int(x[0]))
+    # Parse interacted data
+    print("Parsing interacted with items...")
+    for itype in range(6):
+        for line in open(user_interactions_file + str(itype) + ".csv"):
+            newline = line.split()
+            user = int(newline[0])
+            users[user].interacted_with[itype] = []
+            newline = newline[1:]
+            for i in newline:
+                users[user].interacted_with[itype] += [int(i)]
+
+    print("Parsing interacted with users...")
+    for itype in range(6):
+        for line in open(item_interactions_file + str(itype) + ".csv"):
+            newline = line.split()
+            item = int(newline[0])
+            items[item].interacted_with[itype] = []
+            newline = newline[1:]
+            for i in newline:
+                items[item].interacted_with[itype] += [int(i)]
+
+    print("Building unbuilt interaction lists...")
+    for key, value in users.items():
+        for i in range(6):
+            if i not in users[key].interacted_with:
+                users[key].interacted_with[i] = []
+
+    for key, value in items.items():
+        for i in range(6):
+            if i not in items[key].interacted_with:
+                items[key].interacted_with[i] = []
+
     interactions = parser.parse_interactions(interactions_file, users, items)
 
     sample = {}
@@ -83,14 +123,19 @@ def sampled_interactions(directory, p_count, n_count):
             sample[key] = value
             item_statistics[key[1]][0] += 1
             item_statistics[key[1]][2] += [key[0]]
+
+    data_dicts = model.data_dicts()
  
     print("Negative random sampling")
     list_set = list(users.keys())
     for key, value in items.items():
+        print(value.interacted_with)
+        if not [len(l) for k, l in value.interacted_with.items() if len(l) > 0]:
+            continue
         while item_statistics[key][1] < n_count:
             u = random.choice(list_set)
-            if u not in item_statistics[key][2] and (u, key) not in sample:
-                sample[(u, key)] = model.Interactions(users[u], items[key], [model.Interaction(4, int(time.time()))])
+            if u not in item_statistics[key][2] and (u, key) not in sample and not not [len(l) for k, l in users[u].interacted_with.items() if len(l) > 0]:
+                sample[(u, key)] = model.Interactions(users[u], items[key], [model.Interaction(4, int(time.time()))], data_dicts)
                 item_statistics[key][1] += 1
                 item_statistics[key][2] += [u]
 
@@ -106,6 +151,34 @@ def sampled_interactions(directory, p_count, n_count):
                 writeline.append(str(i.time))
             csvwriter.writerow(writeline)
 
+
+def sample_targetItems(directory, count):
+    (users, items, interactions, 
+     target_users, target_items) = learner.baseline_parse(directory)
+
+    pos = int(count * 0.1184)
+    neg = count - pos
+    neg_set = []
+    pos_set = []
+
+    for k in target_items:
+        v = items[k]
+        if not [len(l) for a, l in v.interacted_with.items() if len(l) > 0]:
+            neg_set += [k]
+            continue
+        else: 
+            pos_set += [k]
+        if len(pos_set) == pos or len(neg_set) == neg:
+            break
+
+    print("NEG COUNT: " + str(len(neg_set)) + " out of " + str(neg))
+    print("POS COUNT: " + str(len(pos_set)) + " out of " + str(pos))
+
+    with open("sampled_targetItems.csv", "w", newline='') as f:
+        for i in pos_set:
+            f.write(str(i) + "\n")
+        for i in neg_set:
+            f.write(str(i) + "\n")
 
 def item_concept_statistics(directory):
     items_file = directory + "/items.csv"
@@ -352,24 +425,61 @@ def target_csv(directory):
                 line.append(str(pred))
                 csvwriter.writerow(line)
 
+def cache_worker(keys, items, users, filename):
+    with open(filename, "w", newline='') as f:
+        csvwriter = csv.writer(f, delimiter=' ', quotechar='|', quoting=csv.QUOTE_MINIMAL)
+        dicts = model.data_dicts() 
+        count = 0
+        data = []
+        for key in keys:
+            i = items[key[1]]
+            u = users[key[0]]
+            count += 1
+            if (count % 1000000 == 0):
+                print("built cache for " + str(count))
+            line = []
+            interaction = model.Interactions(u, i, [], dicts)
+            line.append(key[0])
+            line.append(key[1])
+            features = list(enumerate(interaction.features(items)))
+            line.append(','.join(str((p, a)) for (p, a) in features if a != 0))
+            csvwriter.writerow(line)
 
 def build_cache(directory):
     (users, items, 
      interactions, 
      target_users, 
      target_items) = learner.baseline_parse(directory)
+    n_workers = 47
 
-    with open("target.csv", "w", newline='') as f:
-        csvwriter = csv.writer(f, delimiter=' ', quoting=csv.QUOTE_NONE)
-        dicts = model.data_dicts() 
-        for user, u in users.items():
-            for item, i in items.items():
-                line = []
-                interaction = model.Interactions(u, i, [], dicts)
-                line.append(user)
-                line.append(item)
-                line.append(','.join(str(a) for a in interaction.features()))
-                csvwriter.writerow(line)
+    pathlib.Path('cache').mkdir(parents=True, exist_ok=True) 
+
+    keys = list(interactions.keys())
+
+    # Schedule classification
+    bucket_size = len(keys) / n_workers
+    start = 0
+    jobs = []
+    for i in range(0, n_workers):
+        stop = int(min(len(keys), start + bucket_size))
+        filename = "cache/cache_" + str(i) + ".csv"
+        process = multiprocessing.Process(target = cache_worker,
+                                          args=(keys[start:stop],
+                                            items, users, filename))
+        jobs.append(process)
+        start = stop
+
+    for j in jobs:
+        j.start()
+
+    for j in jobs:
+        j.join()
+
+    result_file = open("cache/cache.csv", "w") 
+    for i in range(0, n_workers):
+        filename = "cache/cache_" + str(i) + ".csv"
+        tempfile = open(filename, "r")
+        result_file.write(tempfile.read() + "\n")
 
 def interacted_with(directory):
     # Set directory strings
@@ -604,7 +714,6 @@ def interacted_with(directory):
             string += "\n"
             itemf5.write(string)
 
-##KJASDNSAKJNDSAKJDNKJASD
 def concept_onehotlist(directory):
     with open("concept_onehot.txt", "w") as f:
         sentence = ""
@@ -628,6 +737,155 @@ def concept_onehotlist(directory):
                 f.write(sentence+"\n")
                 sentence = ""
         f.write(sentence)
+
+def build_visualisations3(directory):
+    users_file = directory + "/users.csv"
+    items_file = directory + "/items.csv"
+    (header_users, users) = parser.select(users_file, lambda x: True, parser.build_user, lambda x: int(x[0]))
+    (header_items, items) = parser.select(items_file, lambda x: True, parser.build_item, lambda x: int(x[0]))
+
+    user_cold = []
+    item_cold = []
+
+    print("Added Users Values")
+    for user, value in users.items():
+        cold = 0
+        l = [value.clevel, value.disc, value.indus, value.country, value.region, value.edud]
+        for i in l:
+            if i == 0 or i is None or i == "non_dach":
+                cold += 1
+        user_cold += [cold]
+
+    print("Added Items Values")
+    for item, value in items.items():
+        cold = 0
+        l = [value.clevel, value.disc, value.indus, value.country, value.region, value.etype,
+        value.lat, value.lon]
+        for i in l:
+            if i == 0 or i is None or i == "non_dach":
+                cold += 1
+        item_cold += [cold]
+
+    u_stats = Counter(user_cold).most_common(6)
+    u_stats.append(("Other", len(users)-sum(row[1] for row in u_stats)))
+    i_stats = Counter(item_cold).most_common(6)
+    i_stats.append(("Other", len(users)-sum(row[1] for row in i_stats)))
+
+    bargraph_single([k for l, k in u_stats], [l for l, k in u_stats], "Most Common Count of Missing Attributes in Users")
+    bargraph_single([k for l, k in i_stats], [l for l, k in i_stats], "Most Common Count of Missing Attributes in Items")
+
+
+def build_visualisations2(directory):
+    # Set directory strings
+    users_file = directory + "/users.csv"
+    items_file = directory + "/items.csv"
+    interactions_file = directory + "/minified_interactions.csv"
+
+    # Parse users and items into a dictionary each
+    (header_users, users) = parser.select(users_file, lambda x: True, parser.build_user, lambda x: int(x[0]))
+    (header_items, items) = parser.select(items_file, lambda x: True, parser.build_item, lambda x: int(x[0]))
+
+    interactions = parser.parse_interactions(interactions_file, users, items)
+
+    user_stats = {"clevel": [], 
+                  "disc": [],
+                  "indus": [],
+                  "country": [],
+                  "region": []}
+
+    item_stats = {"disc": [],
+                  "indus": [],
+                  "clevel": [],
+                  "country": [],
+                  "region": []}
+
+    interaction_time = []
+    interaction_type = []
+    interaction_count = []
+
+    print("Added Users Values")
+    for user, value in users.items():
+        user_stats["clevel"] += [value.clevel]
+        user_stats["disc"] += [value.disc]
+        user_stats["indus"] += [value.indus]
+        user_stats["country"] += [value.country]
+        user_stats["region"] += [value.region]
+
+    print("Added Items Values")
+    for item, value in items.items():
+        item_stats["disc"] += [value.disc]
+        item_stats["indus"] += [value.indus]
+        item_stats["clevel"] += [value.clevel]
+        item_stats["country"] += [value.country]
+        item_stats["region"] += [value.region]
+
+    print("Added Interactions Values")
+    for key, value in interactions.items():
+        interaction_count += [len(value.interactions)]
+        for i in value.interactions:
+            interaction_type += [i.i_type]
+            interaction_time += [i.time]
+
+    u_stats = {}
+    i_stats = {}
+
+    for key, value in user_stats.items():
+        u_stats[key] = Counter(value)
+    for key, value in item_stats.items():
+        i_stats[key] = Counter(value)
+
+    interaction_type = Counter(interaction_type)
+    interaction_count = Counter(interaction_count)
+    
+    i_lables = {0: "Impression", 1: "Click", 2: "Bookmark", 3: "Reply/Apply", 4: "Delete", 5: "Recruiter Click"}
+    c_lables = {0: "Unknown", 1: "Intern", 2: "Beginner", 3: "Experienced", 4: "Manager", 5: "Executive", 6: "S. Executive"}
+
+    bargraph_single(interaction_type.values(), ([i_lables[x] for x in list(interaction_type.keys())]), "Frequency of Interaction Types")
+    bargraph_single(interaction_count.values(), [str(x) for x in list(interaction_count.keys())], "Frequency of Interactions")
+
+    for i in u_stats["clevel"].keys():
+        if i_stats["clevel"][i] == 0:
+            i_stats["clevel"][i] = 0
+    for i in i_stats["clevel"].keys():
+        if u_stats["clevel"][i] == 0:
+            u_stats["clevel"][i] = 0
+
+    for i in u_stats["country"].keys():
+        if i_stats["country"][i] == 0:
+            i_stats["country"][i] = 0
+    for i in i_stats["country"].keys():
+        if u_stats["country"][i] == 0:
+            u_stats["country"][i] = 0
+
+    for i in u_stats["region"].keys():
+        if i_stats["region"][i] == 0:
+            i_stats["region"][i] = 0
+    for i in i_stats["region"].keys():
+        if u_stats["region"][i] == 0:
+            u_stats["region"][i] = 0
+
+    for i in u_stats["indus"].keys():
+        if i_stats["indus"][i] == 0:
+            i_stats["indus"][i] = 0
+    for i in i_stats["indus"].keys():
+        if u_stats["indus"][i] == 0:
+            u_stats["indus"][i] = 0
+
+    for i in u_stats["disc"].keys():
+        if i_stats["disc"][i] == 0:
+            i_stats["disc"][i] = 0
+    for i in i_stats["disc"].keys():
+        if u_stats["disc"][i] == 0:
+            u_stats["disc"][i] = 0
+
+
+    timeseries(interaction_time, "Interaction by Time")
+    bargraph_double(u_stats["country"].values(), i_stats["country"].values(), u_stats["country"].keys(), "User Item Country Frequency")
+    bargraph_double(u_stats["disc"].values(), i_stats["disc"].values(), u_stats["disc"].keys(), "User Item Discipline Frequency")
+    bargraph_double(u_stats["indus"].values(), i_stats["indus"].values(), u_stats["indus"].keys(), "User Item Industry Frequency")
+    bargraph_double(u_stats["clevel"].values(), i_stats["clevel"].values(), [c_lables[x] for x in list(u_stats["clevel"].keys())], "User Item Career Level Frequency")
+    bargraph_double(u_stats["region"].values(), i_stats["region"].values(), u_stats["region"].keys(), "User Item Region Frequency")
+
 
 def build_visualisations(directory):
     (users, items, interactions, 
@@ -663,22 +921,21 @@ def build_visualisations(directory):
                   "time": [],
                   "etype": []}
                   
-    interaction_stats = {"i_type": [], "time": []}
-
     target_items_intersect = 0
     target_users_intersect = 0
     users_length = len(users)
     items_length = len(items)
     target_items_length = len(target_items)
     target_users_length = len(target_users)
-    user_interaction_type = []
-    item_interaction_type = []
-    user_interaction_count = []
-    item_interaction_count = []
-    target_user_interactions = 0
-    target_item_interactions = 0
-    user_interactions = 0
-    item_interactions = 0
+    target_items_not_in_set = 0
+    target_users_not_in_set = 0
+    interaction_time = []
+    interaction_type = []
+    interaction_count = []
+    target_users_interactions = set()
+    target_items_interactions = set()
+    user_interactions = set()
+    item_interactions = set()
     
     for user, value in users.items():
         for c in value.jobroles:
@@ -699,7 +956,11 @@ def build_visualisations(directory):
         user_stats["xtcj"] += [value.xtcj]
         user_stats["premium"] += [value.premium]
         if user in target_users:
-            target_user_intersect += 1
+            target_users_intersect += 1
+
+    for u in target_users:
+        if u not in users:
+            target_users_not_in_set += 1
 
     for item, value in items.items():
         for c in value.title:
@@ -707,7 +968,7 @@ def build_visualisations(directory):
         item_stats["title_count"] += [len(value.title)]
         for c in value.tags:
             item_stats["tags_values"] += [c]
-        user_stats["tags_count"] += [len(value.tags)]
+        item_stats["tags_count"] += [len(value.tags)]
         item_stats["disc"] += [value.disc]
         item_stats["indus"] += [value.indus]
         item_stats["clevel"] += [value.clevel]
@@ -717,18 +978,192 @@ def build_visualisations(directory):
         item_stats["etype"] += [value.etype]
         item_stats["time"] += [value.time]
         item_stats["latlon"] += [(value.lat, value.lon)]
-        if item in target_item:
-            target_item_intersect += 1
+        if item in target_items:
+            target_items_intersect += 1
+
+    for i in target_items:
+        if i not in items:
+            target_items_not_in_set += 1
 
     for key, value in interactions.items():
-        value.user
-    user_interaction_type = []
-    item_interaction_type = []
-    user_interaction_count = []
-    item_interaction_count = []
-    target_user_interactions = 0
-    target_item_interactions = 0
-    user_interactions = 0
-    item_interactions = 0
+        interaction_count += [len(value.interactions)]
+        for i in value.interactions:
+            interaction_type += [i.i_type]
+            interaction_time += [i.time]
+        if value.user.id in target_users:
+            target_users_interactions.add(value.user.id)
+        if value.item.id in target_items:
+            target_items_interactions.add(value.item.id)
+        if value.item.id in items:
+            item_interactions.add(value.item.id)
+        if value.user.id in users:
+            user_interactions.add(value.user.id)
 
-    interaction_stats = {"i_type": [], "time": []}
+    for key, value in user_stats.items():
+        user_stats[key] = Counter(value)
+    for key, value in item_stats.items():
+        item_stats[key] = Counter(value)
+
+    interaction_type = Counter(interaction_type)
+    interaction_count = Counter(interaction_count)
+    target_users_interactions = len(target_users_interactions)
+    target_items_interactions = len(target_items_interactions)
+    user_interactions = len(user_interactions)
+    item_interactions = len(item_interactions)
+    
+    i_lables = {0: "Impression", 1: "Click", 2: "Bookmark", 3: "Reply/Apply", 4: "Delete", 5: "Recruiter Click"}
+    c_lables = {0: "Unknown", 1: "Intern", 2: "Beginner", 3: "Experienced", 4: "Manager", 5: "Executive", 6: "S. Executive"}
+
+    bargraph_single(interaction_type.values(), ([i_lables[x] for x in list(interaction_type.keys())]), "Frequency of Interaction Types")
+    bargraph_single(interaction_count.values(), [str(x) for x in list(interaction_count.keys())], "Frequency of Interactions")
+
+    for i in user_stats["clevel"].keys():
+        if item_stats["clevel"][i] == 0:
+            item_stats["clevel"][i] = 0
+    for i in item_stats["clevel"].keys():
+        if user_stats["clevel"][i] == 0:
+            user_stats["clevel"][i] = 0
+
+    for i in user_stats["country"].keys():
+        if item_stats["country"][i] == 0:
+            item_stats["country"][i] = 0
+    for i in item_stats["country"].keys():
+        if user_stats["country"][i] == 0:
+            user_stats["country"][i] = 0
+
+    for i in user_stats["region"].keys():
+        if item_stats["region"][i] == 0:
+            item_stats["region"][i] = 0
+    for i in item_stats["region"].keys():
+        if user_stats["region"][i] == 0:
+            user_stats["region"][i] = 0
+
+    for i in user_stats["indus"].keys():
+        if item_stats["indus"][i] == 0:
+            item_stats["indus"][i] = 0
+    for i in item_stats["indus"].keys():
+        if user_stats["indus"][i] == 0:
+            user_stats["indus"][i] = 0
+
+    for i in user_stats["disc"].keys():
+        if item_stats["disc"][i] == 0:
+            item_stats["disc"][i] = 0
+    for i in item_stats["disc"].keys():
+        if user_stats["disc"][i] == 0:
+            user_stats["disc"][i] = 0
+
+
+    timeseries(interaction_time, "Interaction by Time")
+
+    bargraph_double(user_stats["country"].values(), item_stats["country"].values(), user_stats["country"].keys(), "User Item Country Frequency")
+    bargraph_double(user_stats["disc"].values(), item_stats["disc"].values(), user_stats["disc"].keys(), "User Item Discipline Frequency")
+    bargraph_double(user_stats["indus"].values(), item_stats["indus"].values(), user_stats["indus"].keys(), "User Item Industry Frequency")
+    bargraph_double(user_stats["clevel"].values(), item_stats["clevel"].values(), [c_lables[x] for x in list(user_stats["clevel"].keys())], "User Item Career Level Frequency")
+    bargraph_double(user_stats["region"].values(), item_stats["region"].values(), user_stats["region"].keys(), "User Item Region Frequency")
+
+    with open("somestats.txt", "w") as f:
+        for key, value in user_stats.items():
+            f.write("user " + key + str(user_stats[key]) + "\n")
+        for key, value in item_stats.items():
+            f.write("item " + key + str(item_stats[key]) + "\n")
+        f.write("uniquejobroles"+str(len(user_stats["jobroles_values"])) + "\n")
+        f.write("uniquetitle"+str(len(item_stats["title_values"])) + "\n")
+        f.write("uniquetags"+str(len(item_stats["tags_values"])) + "\n")
+        f.write("jobrolescount"+str(user_stats["jobroles_count"]) + "\n")
+        f.write("titlecount"+str(item_stats["title_count"]) + "\n")
+        f.write("tagscount"+str(item_stats["tags_count"]) + "\n")
+        f.write("targetuserinteractions"+str(target_users_interactions) + "\n")
+        f.write("targetiteminteractions"+str(target_items_interactions) + "\n")
+        f.write("userinteractions"+str(user_interactions) + "\n")
+        f.write("iteminteractions"+str(item_interactions) + "\n")
+        f.write("targetitemsinterset"+str(target_items_intersect) + "\n")
+        f.write("targetuserintersect"+str(target_users_intersect) + "\n")
+        f.write("userlength"+str(users_length) + "\n")
+        f.write("itemlength"+str(items_length) + "\n")
+        f.write("targetitemlength"+str(target_items_length) + "\n")
+        f.write("targetuserlength"+str(target_users_length) + "\n")
+        f.write("targetitemsnotinuset"+str(target_items_not_in_set) + "\n")
+        f.write("targetusersnotinset"+str(target_users_not_in_set) + "\n")
+
+def timeseries(values, title):
+    n, bins = np.histogram(values, 50)
+    bincenters = 0.5*(bins[1:]+bins[:-1])
+    plt.plot(bincenters,n,'-')
+    plt.title(title)
+    plt.tight_layout()
+    plt.savefig(title)
+
+def pigraph(values, labels, title):
+    m = max(enumerate(values), key=lambda x: x[1])[0]
+    explode = [0]*len(values)
+    explode[m] = 0.1
+
+    fig1, ax1 = plt.subplots()
+    ax1.pie(values, explode=explode, labels=labels, autopct='%1.1f%%',
+                    shadow=True, startangle=90)
+    ax1.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
+    plt.title(title)
+
+    plt.tight_layout()
+    plt.savefig(title)
+
+def bargraph_double(values1, values2, labels, title):
+    ind = np.arange(len(labels))
+    width = 1/(len(labels))
+    fix, ax = plt.subplots()
+
+    if len(labels) > 12:
+        width = 0.3
+        fig, ax = plt.subplots(figsize=(12.5, 4.75))
+
+    rects1 = ax.bar(ind, values1, width, color='b')
+    rects2 = ax.bar(ind+width, values2, width, color='r')
+
+    ax.set_ylabel("Count")
+    ax.set_title(title)
+    ax.set_xticks(ind + (width-0.03)/2)
+    ax.set_xticklabels(labels)
+
+    ax.legend((rects1[0], rects2[0]), ('Users', 'Items'))
+
+    """
+    def autolabel(rects):
+        for rect in rects:
+            height = rect.get_height()
+            ax.text(rect.get_x() + rect.get_width()/2., 1.00*height,
+                    '%d' % int(height),
+                    ha='center', va='bottom')
+
+
+
+    if len(labels) < 12:
+        autolabel(rects1)
+        autolabel(rects2)
+    """
+
+    plt.tight_layout()
+    plt.savefig(title)
+
+def bargraph_single(values, labels, title):
+    ind = np.arange(len(values))
+    width = 3/len(values)
+
+    fix, ax = plt.subplots()
+    rects = ax.bar(ind, values, width, color='b')
+
+    ax.set_ylabel("Count")
+    ax.set_title(title)
+    ax.set_xticks(ind)
+    ax.set_xticklabels(labels)
+
+    def autolabel(rects):
+        for rect in rects:
+            height = rect.get_height()
+            ax.text(rect.get_x() + rect.get_width()/2., 1.00*height,
+                    '%d' % int(height),
+                    ha='center', va='bottom')
+
+    autolabel(rects)
+
+    plt.tight_layout()
+    plt.savefig(title)

@@ -68,1635 +68,110 @@ class Interactions:
     ### BASELINE FEATURES
     def clevel_match(self):
         if self.user.clevel == self.item.clevel:
-            return 1.0
+            return 1
         else:
-            return 0.0
+            return 0
 
     def indus_match(self):
         if self.user.indus == self.item.indus:
-            return 1.0
+            return 1
         else:
-            return 0.0
+            return 0
 
     def discipline_match(self):
         if self.user.disc == self.item.disc:
-            return 1.0
+            return 1
         else:
-            return 0.0
+            return 0
 
     def country_match(self):
         if self.user.country == self.item.country:
-            return 1.0
+            return 1
         else:
-            return 0.0
+            return 0
 
     def region_match(self):
         if self.user.region == self.item.region:
-            return 1.0
+            return 1
         else:
-            return 0.0
+            return 0
 
     ### Interaction features ##########################################
 
-    def interaction0_titletags(self, items):
-        interacted_with = [x for x in self.user.interacted_with[0] if x != self.item.id]
-        length = len(interacted_with)
-        if length != 0:
-            sim = 0.0
-            intersect = set(self.item.title)
-            for i in interacted_with:
-                sim += len(intersect.intersection(items[i].tags))/(len(intersect.union(items[i].tags))+1)
-            return sim/len(interacted_with)
-        else:
-            return 0.0
-
-    def interaction0_tagstitle(self, items):
-        interacted_with = [x for x in self.user.interacted_with[0] if x != self.item.id]
-        length = len(interacted_with)
-        if length != 0:
-            intersect = set(self.item.tags)
-            sim = 0.0
-            for i in interacted_with:
-                sim += len(intersect.intersection(items[i].title))/(len(intersect.union(items[i].title))+1)
-            return sim/len(interacted_with)
-        else:
-            return 0.0
-
-    def interaction0_titletitle(self, items):
-        interacted_with = [x for x in self.user.interacted_with[0] if x != self.item.id]
-        length = len(interacted_with)
-        if length != 0:
-            intersect = set(self.item.title)
-            sim = 0.0
-            for i in interacted_with:
-                sim += len(intersect.intersection(items[i].title))/(len(intersect.union(items[i].title))+1)
-            return sim/len(interacted_with)
-        else:
-            return 0.0
-
-    def interaction0_tagstags(self, items):
-        interacted_with = [x for x in self.user.interacted_with[0] if x != self.item.id]
-        length = len(interacted_with)
-        if length != 0:
-            intersect = set(self.item.tags)
-            sim = 0.0
-            for i in interacted_with:
-                sim += len(intersect.intersection(items[i].tags))/(len(intersect.union(items[i].tags))+1)
-            return sim/len(interacted_with)
-        else:
-            return 0.0
-
-    def interaction0_clevel(self, items):
-        interacted_with = [x for x in self.user.interacted_with[0] if x != self.item.id]
-        length = len(interacted_with)
-        if length != 0:
-            sim = 0.0
-            for i in interacted_with:
-                if items[i].clevel == self.item.clevel:
-                    sim += 1
-            return sim/len(interacted_with)
-        else:
-            return 0.0
-
-    def interaction0_disc(self, items):
-        interacted_with = [x for x in self.user.interacted_with[0] if x != self.item.id]
-        length = len(interacted_with)
-        if length != 0:
-            sim = 0.0
-            for i in interacted_with:
-                if items[i].disc == self.item.disc:
-                    sim += 1
-            return sim/len(interacted_with)
-        else:
-            return 0.0
-
-    def interaction0_indus(self, items):
-        interacted_with = [x for x in self.user.interacted_with[0] if x != self.item.id]
-        length = len(interacted_with)
-        if length != 0:
-            sim = 0.0
-            for i in interacted_with:
-                if items[i].indus == self.item.indus:
-                    sim += 1
-            return sim/len(interacted_with)
-        else:
-            return 0.0
-
-    def interaction0_region(self, items):
-        interacted_with = [x for x in self.user.interacted_with[0] if x != self.item.id]
-        length = len(interacted_with)
-        if length != 0:
-            sim = 0.0
-            for i in interacted_with:
-                if items[i].region == self.item.region:
-                    sim += 1
-            return sim/len(interacted_with)
-        else:
-            return 0.0
-
-    def interaction0_country(self, items):
-        interacted_with = [x for x in self.user.interacted_with[0] if x != self.item.id]
-        length = len(interacted_with)
-        if length != 0:
-            sim = 0.0
-            for i in interacted_with:
-                if items[i].country == self.item.country:
-                    sim += 1
-            return sim/len(interacted_with)
-        else:
-            return 0.0
-
-    def interaction0_etype(self, items):
-        interacted_with = [x for x in self.user.interacted_with[0] if x != self.item.id]
-        length = len(interacted_with)
-        if length != 0:
-            sim = 0.0
-            for i in interacted_with:
-                if items[i].etype == self.item.etype:
-                    sim += 1
-            return sim/len(interacted_with)
-        else:
-            return 0.0
-
-    def interaction0_distance(self, items):
-        interacted_with = [x for x in self.user.interacted_with[0] if x != self.item.id and items[x].lat is not None and items[x].lon is not None]
-        length = len(interacted_with)
-        if length != 0 and self.item.lat is not None and self.item.lon is not None:
-            sim = 0.0
-            (lat1, lon1) = (self.item.lat, self.item.lon)
-            radius = 6371
-            for i in interacted_with:
-                (lat2, lon2) = (items[i].lat, items[i].lon)
-                dlat = math.radians(lat2-lat1)
-                dlon = math.radians(lon2-lon1)
-                a = math.sin(dlat/2) * math.sin(dlat/2) + math.cos(math.radians(lat1)) \
-                    * math.cos(math.radians(lat2)) * math.sin(dlon/2) * math.sin(dlon/2)
-                sim += radius * (2 * math.atan2(math.sqrt(a), math.sqrt(1-a)))
-            return sim/len(interacted_with)
-        else:
-            return 100000.0
-
-    def interaction0_clevel_change(self, items):
-        interacted_with = [x for x in self.user.interacted_with[0] if x != self.item.id]
-        length = len(interacted_with)
-        if length != 0:
-            sim = 0.0
-            for i in interacted_with:
-                sim += ((items[i].clevel - self.item.clevel)/10)+0.5
-            return sim/len(interacted_with)
-        else:
-            return 0.5
-
-    def interaction1_titletags(self, items):
-        interacted_with = [x for x in self.user.interacted_with[1] if x != self.item.id]
-        length = len(interacted_with)
-        if length != 0:
-            sim = 0.0
-            intersect = set(self.item.title)
-            for i in interacted_with:
-                sim += len(intersect.intersection(items[i].tags))/(len(intersect.union(items[i].tags))+1)
-            return sim/len(interacted_with)
-        else:
-            return 0.0
-
-    def interaction1_tagstitle(self, items):
-        interacted_with = [x for x in self.user.interacted_with[1] if x != self.item.id]
-        length = len(interacted_with)
-        if length != 0:
-            intersect = set(self.item.tags)
-            sim = 0.0
-            for i in interacted_with:
-                sim += len(intersect.intersection(items[i].title))/(len(intersect.union(items[i].title))+1)
-            return sim/len(interacted_with)
-        else:
-            return 0.0
-
-    def interaction1_titletitle(self, items):
-        interacted_with = [x for x in self.user.interacted_with[1] if x != self.item.id]
-        length = len(interacted_with)
-        if length != 0:
-            intersect = set(self.item.title)
-            sim = 0.0
-            for i in interacted_with:
-                sim += len(intersect.intersection(items[i].title))/(len(intersect.union(items[i].title))+1)
-            return sim/len(interacted_with)
-        else:
-            return 0.0
-
-    def interaction1_tagstags(self, items):
-        interacted_with = [x for x in self.user.interacted_with[1] if x != self.item.id]
-        length = len(interacted_with)
-        if length != 0:
-            intersect = set(self.item.tags)
-            sim = 0.0
-            for i in interacted_with:
-                sim += len(intersect.intersection(items[i].tags))/(len(intersect.union(items[i].tags))+1)
-            return sim/len(interacted_with)
-        else:
-            return 0.0
-
-    def interaction1_clevel(self, items):
-        interacted_with = [x for x in self.user.interacted_with[1] if x != self.item.id]
-        length = len(interacted_with)
-        if length != 0:
-            sim = 0.0
-            for i in interacted_with:
-                if items[i].clevel == self.item.clevel:
-                    sim += 1
-            return sim/len(interacted_with)
-        else:
-            return 0.0
-
-    def interaction1_disc(self, items):
-        interacted_with = [x for x in self.user.interacted_with[1] if x != self.item.id]
-        length = len(interacted_with)
-        if length != 0:
-            sim = 0.0
-            for i in interacted_with:
-                if items[i].disc == self.item.disc:
-                    sim += 1
-            return sim/len(interacted_with)
-        else:
-            return 0.0
-
-    def interaction1_indus(self, items):
-        interacted_with = [x for x in self.user.interacted_with[1] if x != self.item.id]
-        length = len(interacted_with)
-        if length != 0:
-            sim = 0.0
-            for i in interacted_with:
-                if items[i].indus == self.item.indus:
-                    sim += 1
-            return sim/len(interacted_with)
-        else:
-            return 0.0
-
-    def interaction1_region(self, items):
-        interacted_with = [x for x in self.user.interacted_with[1] if x != self.item.id]
-        length = len(interacted_with)
-        if length != 0:
-            sim = 0.0
-            for i in interacted_with:
-                if items[i].region == self.item.region:
-                    sim += 1
-            return sim/len(interacted_with)
-        else:
-            return 0.0
-
-    def interaction1_country(self, items):
-        interacted_with = [x for x in self.user.interacted_with[1] if x != self.item.id]
-        length = len(interacted_with)
-        if length != 0:
-            sim = 0.0
-            for i in interacted_with:
-                if items[i].country == self.item.country:
-                    sim += 1
-            return sim/len(interacted_with)
-        else:
-            return 0.0
-
-    def interaction1_etype(self, items):
-        interacted_with = [x for x in self.user.interacted_with[1] if x != self.item.id]
-        length = len(interacted_with)
-        if length != 0:
-            sim = 0.0
-            for i in interacted_with:
-                if items[i].etype == self.item.etype:
-                    sim += 1
-            return sim/len(interacted_with)
-        else:
-            return 0.0
-
-    def interaction1_distance(self, items):
-        interacted_with = [x for x in self.user.interacted_with[1] if x != self.item.id and items[x].lat is not None and items[x].lon is not None]
-        length = len(interacted_with)
-        if length != 0 and self.item.lat is not None and self.item.lon is not None:
-            sim = 0.0
-            (lat1, lon1) = (self.item.lat, self.item.lon)
-            radius = 6371
-            for i in interacted_with:
-                (lat2, lon2) = (items[i].lat, items[i].lon)
-                dlat = math.radians(lat2-lat1)
-                dlon = math.radians(lon2-lon1)
-                a = math.sin(dlat/2) * math.sin(dlat/2) + math.cos(math.radians(lat1)) \
-                    * math.cos(math.radians(lat2)) * math.sin(dlon/2) * math.sin(dlon/2)
-                sim += radius * (2 * math.atan2(math.sqrt(a), math.sqrt(1-a)))
-            return sim/len(interacted_with)
-        else:
-            return 100000.0
-
-    def interaction1_clevel_change(self, items):
-        interacted_with = [x for x in self.user.interacted_with[1] if x != self.item.id]
-        length = len(interacted_with)
-        if length != 0:
-            sim = 0.0
-            for i in interacted_with:
-                sim += ((items[i].clevel - self.item.clevel)/10)+0.5
-            return sim/len(interacted_with)
-        else:
-            return 0.5
-
-    def interaction2_titletags(self, items):
-        interacted_with = [x for x in self.user.interacted_with[2] if x != self.item.id]
-        length = len(interacted_with)
-        if length != 0:
-            sim = 0.0
-            intersect = set(self.item.title)
-            for i in interacted_with:
-                sim += len(intersect.intersection(items[i].tags))/(len(intersect.union(items[i].tags))+1)
-            return sim/len(interacted_with)
-        else:
-            return 0.0
-
-    def interaction2_tagstitle(self, items):
-        interacted_with = [x for x in self.user.interacted_with[2] if x != self.item.id]
-        length = len(interacted_with)
-        if length != 0:
-            intersect = set(self.item.tags)
-            sim = 0.0
-            for i in interacted_with:
-                sim += len(intersect.intersection(items[i].title))/(len(intersect.union(items[i].title))+1)
-            return sim/len(interacted_with)
-        else:
-            return 0.0
-
-    def interaction2_titletitle(self, items):
-        interacted_with = [x for x in self.user.interacted_with[2] if x != self.item.id]
-        length = len(interacted_with)
-        if length != 0:
-            intersect = set(self.item.title)
-            sim = 0.0
-            for i in interacted_with:
-                sim += len(intersect.intersection(items[i].title))/(len(intersect.union(items[i].title))+1)
-            return sim/len(interacted_with)
-        else:
-            return 0.0
-
-    def interaction2_tagstags(self, items):
-        interacted_with = [x for x in self.user.interacted_with[2] if x != self.item.id]
-        length = len(interacted_with)
-        if length != 0:
-            intersect = set(self.item.tags)
-            sim = 0.0
-            for i in interacted_with:
-                sim += len(intersect.intersection(items[i].tags))/(len(intersect.union(items[i].tags))+1)
-            return sim/len(interacted_with)
-        else:
-            return 0.0
-
-    def interaction2_clevel(self, items):
-        interacted_with = [x for x in self.user.interacted_with[2] if x != self.item.id]
-        length = len(interacted_with)
-        if length != 0:
-            sim = 0.0
-            for i in interacted_with:
-                if items[i].clevel == self.item.clevel:
-                    sim += 1
-            return sim/len(interacted_with)
-        else:
-            return 0.0
-
-    def interaction2_disc(self, items):
-        interacted_with = [x for x in self.user.interacted_with[2] if x != self.item.id]
-        length = len(interacted_with)
-        if length != 0:
-            sim = 0.0
-            for i in interacted_with:
-                if items[i].disc == self.item.disc:
-                    sim += 1
-            return sim/len(interacted_with)
-        else:
-            return 0.0
-
-    def interaction2_indus(self, items):
-        interacted_with = [x for x in self.user.interacted_with[2] if x != self.item.id]
-        length = len(interacted_with)
-        if length != 0:
-            sim = 0.0
-            for i in interacted_with:
-                if items[i].indus == self.item.indus:
-                    sim += 1
-            return sim/len(interacted_with)
-        else:
-            return 0.0
-
-    def interaction2_region(self, items):
-        interacted_with = [x for x in self.user.interacted_with[2] if x != self.item.id]
-        length = len(interacted_with)
-        if length != 0:
-            sim = 0.0
-            for i in interacted_with:
-                if items[i].region == self.item.region:
-                    sim += 1
-            return sim/len(interacted_with)
-        else:
-            return 0.0
-
-    def interaction2_country(self, items):
-        interacted_with = [x for x in self.user.interacted_with[2] if x != self.item.id]
-        length = len(interacted_with)
-        if length != 0:
-            sim = 0.0
-            for i in interacted_with:
-                if items[i].country == self.item.country:
-                    sim += 1
-            return sim/len(interacted_with)
-        else:
-            return 0.0
-
-    def interaction2_etype(self, items):
-        interacted_with = [x for x in self.user.interacted_with[2] if x != self.item.id]
-        length = len(interacted_with)
-        if length != 0:
-            sim = 0.0
-            for i in interacted_with:
-                if items[i].etype == self.item.etype:
-                    sim += 1
-            return sim/len(interacted_with)
-        else:
-            return 0.0
-
-    def interaction2_distance(self, items):
-        interacted_with = [x for x in self.user.interacted_with[2] if x != self.item.id and items[x].lat is not None and items[x].lon is not None]
-        length = len(interacted_with)
-        if length != 0 and self.item.lat is not None and self.item.lon is not None:
-            sim = 0.0
-            (lat1, lon1) = (self.item.lat, self.item.lon)
-            radius = 6371
-            for i in interacted_with:
-                (lat2, lon2) = (items[i].lat, items[i].lon)
-                dlat = math.radians(lat2-lat1)
-                dlon = math.radians(lon2-lon1)
-                a = math.sin(dlat/2) * math.sin(dlat/2) + math.cos(math.radians(lat1)) \
-                    * math.cos(math.radians(lat2)) * math.sin(dlon/2) * math.sin(dlon/2)
-                sim += radius * (2 * math.atan2(math.sqrt(a), math.sqrt(1-a)))
-            return sim/len(interacted_with)
-        else:
-            return 100000.0
-
-    def interaction2_clevel_change(self, items):
-        interacted_with = [x for x in self.user.interacted_with[2] if x != self.item.id]
-        length = len(interacted_with)
-        if length != 0:
-            sim = 0.0
-            for i in interacted_with:
-                sim += ((items[i].clevel - self.item.clevel)/10)+0.5
-            return sim/len(interacted_with)
-        else:
-            return 0.5
-
-    def interaction3_titletags(self, items):
-        interacted_with = [x for x in self.user.interacted_with[3] if x != self.item.id]
-        length = len(interacted_with)
-        if length != 0:
-            sim = 0.0
-            intersect = set(self.item.title)
-            for i in interacted_with:
-                sim += len(intersect.intersection(items[i].tags))/(len(intersect.union(items[i].tags))+1)
-            return sim/len(interacted_with)
-        else:
-            return 0.0
-
-    def interaction3_tagstitle(self, items):
-        interacted_with = [x for x in self.user.interacted_with[3] if x != self.item.id]
-        length = len(interacted_with)
-        if length != 0:
-            intersect = set(self.item.tags)
-            sim = 0.0
-            for i in interacted_with:
-                sim += len(intersect.intersection(items[i].title))/(len(intersect.union(items[i].title))+1)
-            return sim/len(interacted_with)
-        else:
-            return 0.0
-
-    def interaction3_titletitle(self, items):
-        interacted_with = [x for x in self.user.interacted_with[3] if x != self.item.id]
-        length = len(interacted_with)
-        if length != 0:
-            intersect = set(self.item.title)
-            sim = 0.0
-            for i in interacted_with:
-                sim += len(intersect.intersection(items[i].title))/(len(intersect.union(items[i].title))+1)
-            return sim/len(interacted_with)
-        else:
-            return 0.0
-
-    def interaction3_tagstags(self, items):
-        interacted_with = [x for x in self.user.interacted_with[3] if x != self.item.id]
-        length = len(interacted_with)
-        if length != 0:
-            intersect = set(self.item.tags)
-            sim = 0.0
-            for i in interacted_with:
-                sim += len(intersect.intersection(items[i].tags))/(len(intersect.union(items[i].tags))+1)
-            return sim/len(interacted_with)
-        else:
-            return 0.0
-
-    def interaction3_clevel(self, items):
-        interacted_with = [x for x in self.user.interacted_with[3] if x != self.item.id]
-        length = len(interacted_with)
-        if length != 0:
-            sim = 0.0
-            for i in interacted_with:
-                if items[i].clevel == self.item.clevel:
-                    sim += 1
-            return sim/len(interacted_with)
-        else:
-            return 0.0
-
-    def interaction3_disc(self, items):
-        interacted_with = [x for x in self.user.interacted_with[3] if x != self.item.id]
-        length = len(interacted_with)
-        if length != 0:
-            sim = 0.0
-            for i in interacted_with:
-                if items[i].disc == self.item.disc:
-                    sim += 1
-            return sim/len(interacted_with)
-        else:
-            return 0.0
-
-    def interaction3_indus(self, items):
-        interacted_with = [x for x in self.user.interacted_with[3] if x != self.item.id]
-        length = len(interacted_with)
-        if length != 0:
-            sim = 0.0
-            for i in interacted_with:
-                if items[i].indus == self.item.indus:
-                    sim += 1
-            return sim/len(interacted_with)
-        else:
-            return 0.0
-
-    def interaction3_region(self, items):
-        interacted_with = [x for x in self.user.interacted_with[3] if x != self.item.id]
-        length = len(interacted_with)
-        if length != 0:
-            sim = 0.0
-            for i in interacted_with:
-                if items[i].region == self.item.region:
-                    sim += 1
-            return sim/len(interacted_with)
-        else:
-            return 0.0
-
-    def interaction3_country(self, items):
-        interacted_with = [x for x in self.user.interacted_with[3] if x != self.item.id]
-        length = len(interacted_with)
-        if length != 0:
-            sim = 0.0
-            for i in interacted_with:
-                if items[i].country == self.item.country:
-                    sim += 1
-            return sim/len(interacted_with)
-        else:
-            return 0.0
-
-    def interaction3_etype(self, items):
-        interacted_with = [x for x in self.user.interacted_with[3] if x != self.item.id]
-        length = len(interacted_with)
-        if length != 0:
-            sim = 0.0
-            for i in interacted_with:
-                if items[i].etype == self.item.etype:
-                    sim += 1
-            return sim/len(interacted_with)
-        else:
-            return 0.0
-
-    def interaction3_distance(self, items):
-        interacted_with = [x for x in self.user.interacted_with[3] if x != self.item.id and items[x].lat is not None and items[x].lon is not None]
-        length = len(interacted_with)
-        if length != 0 and self.item.lat is not None and self.item.lon is not None:
-            sim = 0.0
-            (lat1, lon1) = (self.item.lat, self.item.lon)
-            radius = 6371
-            for i in interacted_with:
-                (lat2, lon2) = (items[i].lat, items[i].lon)
-                dlat = math.radians(lat2-lat1)
-                dlon = math.radians(lon2-lon1)
-                a = math.sin(dlat/2) * math.sin(dlat/2) + math.cos(math.radians(lat1)) \
-                    * math.cos(math.radians(lat2)) * math.sin(dlon/2) * math.sin(dlon/2)
-                sim += radius * (2 * math.atan2(math.sqrt(a), math.sqrt(1-a)))
-            return sim/len(interacted_with)
-        else:
-            return 100000.0
-
-    def interaction3_clevel_change(self, items):
-        interacted_with = [x for x in self.user.interacted_with[3] if x != self.item.id]
-        length = len(interacted_with)
-        if length != 0:
-            sim = 0.0
-            for i in interacted_with:
-                sim += ((items[i].clevel - self.item.clevel)/10)+0.5
-            return sim/len(interacted_with)
-        else:
-            return 0.5
-
-    def interaction4_titletags(self, items):
-        interacted_with = [x for x in self.user.interacted_with[4] if x != self.item.id]
-        length = len(interacted_with)
-        if length != 0:
-            sim = 0.0
-            intersect = set(self.item.title)
-            for i in interacted_with:
-                sim += len(intersect.intersection(items[i].tags))/(len(intersect.union(items[i].tags))+1)
-            return sim/len(interacted_with)
-        else:
-            return 0.0
-
-    def interaction4_tagstitle(self, items):
-        interacted_with = [x for x in self.user.interacted_with[4] if x != self.item.id]
-        length = len(interacted_with)
-        if length != 0:
-            intersect = set(self.item.tags)
-            sim = 0.0
-            for i in interacted_with:
-                sim += len(intersect.intersection(items[i].title))/(len(intersect.union(items[i].title))+1)
-            return sim/len(interacted_with)
-        else:
-            return 0.0
-
-    def interaction4_titletitle(self, items):
-        interacted_with = [x for x in self.user.interacted_with[4] if x != self.item.id]
-        length = len(interacted_with)
-        if length != 0:
-            intersect = set(self.item.title)
-            sim = 0.0
-            for i in interacted_with:
-                sim += len(intersect.intersection(items[i].title))/(len(intersect.union(items[i].title))+1)
-            return sim/len(interacted_with)
-        else:
-            return 0.0
-
-    def interaction4_tagstags(self, items):
-        interacted_with = [x for x in self.user.interacted_with[4] if x != self.item.id]
-        length = len(interacted_with)
-        if length != 0:
-            intersect = set(self.item.tags)
-            sim = 0.0
-            for i in interacted_with:
-                sim += len(intersect.intersection(items[i].tags))/(len(intersect.union(items[i].tags))+1)
-            return sim/len(interacted_with)
-        else:
-            return 0.0
-
-    def interaction4_clevel(self, items):
-        interacted_with = [x for x in self.user.interacted_with[4] if x != self.item.id]
-        length = len(interacted_with)
-        if length != 0:
-            sim = 0.0
-            for i in interacted_with:
-                if items[i].clevel == self.item.clevel:
-                    sim += 1
-            return sim/len(interacted_with)
-        else:
-            return 0.0
-
-    def interaction4_disc(self, items):
-        interacted_with = [x for x in self.user.interacted_with[4] if x != self.item.id]
-        length = len(interacted_with)
-        if length != 0:
-            sim = 0.0
-            for i in interacted_with:
-                if items[i].disc == self.item.disc:
-                    sim += 1
-            return sim/len(interacted_with)
-        else:
-            return 0.0
-
-    def interaction4_indus(self, items):
-        interacted_with = [x for x in self.user.interacted_with[4] if x != self.item.id]
-        length = len(interacted_with)
-        if length != 0:
-            sim = 0.0
-            for i in interacted_with:
-                if items[i].indus == self.item.indus:
-                    sim += 1
-            return sim/len(interacted_with)
-        else:
-            return 0.0
-
-    def interaction4_region(self, items):
-        interacted_with = [x for x in self.user.interacted_with[4] if x != self.item.id]
-        length = len(interacted_with)
-        if length != 0:
-            sim = 0.0
-            for i in interacted_with:
-                if items[i].region == self.item.region:
-                    sim += 1
-            return sim/len(interacted_with)
-        else:
-            return 0.0
-
-    def interaction4_country(self, items):
-        interacted_with = [x for x in self.user.interacted_with[4] if x != self.item.id]
-        length = len(interacted_with)
-        if length != 0:
-            sim = 0.0
-            for i in interacted_with:
-                if items[i].country == self.item.country:
-                    sim += 1
-            return sim/len(interacted_with)
-        else:
-            return 0.0
-
-    def interaction4_etype(self, items):
-        interacted_with = [x for x in self.user.interacted_with[4] if x != self.item.id]
-        length = len(interacted_with)
-        if length != 0:
-            sim = 0.0
-            for i in interacted_with:
-                if items[i].etype == self.item.etype:
-                    sim += 1
-            return sim/len(interacted_with)
-        else:
-            return 0.0
-
-    def interaction4_distance(self, items):
-        interacted_with = [x for x in self.user.interacted_with[4] if x != self.item.id and items[x].lat is not None and items[x].lon is not None]
-        length = len(interacted_with)
-        if length != 0 and self.item.lat is not None and self.item.lon is not None:
-            sim = 0.0
-            (lat1, lon1) = (self.item.lat, self.item.lon)
-            radius = 6371
-            for i in interacted_with:
-                (lat2, lon2) = (items[i].lat, items[i].lon)
-                dlat = math.radians(lat2-lat1)
-                dlon = math.radians(lon2-lon1)
-                a = math.sin(dlat/2) * math.sin(dlat/2) + math.cos(math.radians(lat1)) \
-                    * math.cos(math.radians(lat2)) * math.sin(dlon/2) * math.sin(dlon/2)
-                sim += radius * (2 * math.atan2(math.sqrt(a), math.sqrt(1-a)))
-            return sim/len(interacted_with)
-        else:
-            return 100000.0
-        
-    def interaction4_clevel_change(self, items):
-        interacted_with = [x for x in self.user.interacted_with[4] if x != self.item.id]
-        length = len(interacted_with)
-        if length != 0:
-            sim = 0.0
-            for i in interacted_with:
-                sim += ((items[i].clevel - self.item.clevel)/10)+0.5
-            return sim/len(interacted_with)
-        else:
-            return 0.5
-        
-    def interaction5_titletags(self, items):
-        interacted_with = [x for x in self.user.interacted_with[5] if x != self.item.id]
-        length = len(interacted_with)
-        if length != 0:
-            sim = 0.0
-            intersect = set(self.item.title)
-            for i in interacted_with:
-                sim += len(intersect.intersection(items[i].tags))/(len(intersect.union(items[i].tags))+1)
-            return sim/len(interacted_with)
-        else:
-            return 0.0
-
-    def interaction5_tagstitle(self, items):
-        interacted_with = [x for x in self.user.interacted_with[5] if x != self.item.id]
-        length = len(interacted_with)
-        if length != 0:
-            intersect = set(self.item.tags)
-            sim = 0.0
-            for i in interacted_with:
-                sim += len(intersect.intersection(items[i].title))/(len(intersect.union(items[i].title))+1)
-            return sim/len(interacted_with)
-        else:
-            return 0.0
-
-    def interaction5_titletitle(self, items):
-        interacted_with = [x for x in self.user.interacted_with[5] if x != self.item.id]
-        length = len(interacted_with)
-        if length != 0:
-            intersect = set(self.item.title)
-            sim = 0.0
-            for i in interacted_with:
-                sim += len(intersect.intersection(items[i].title))/(len(intersect.union(items[i].title))+1)
-            return sim/len(interacted_with)
-        else:
-            return 0.0
-
-    def interaction5_tagstags(self, items):
-        interacted_with = [x for x in self.user.interacted_with[5] if x != self.item.id]
-        length = len(interacted_with)
-        if length != 0:
-            intersect = set(self.item.tags)
-            sim = 0.0
-            for i in interacted_with:
-                sim += len(intersect.intersection(items[i].tags))/(len(intersect.union(items[i].tags))+1)
-            return sim/len(interacted_with)
-        else:
-            return 0.0
-
-    def interaction5_clevel(self, items):
-        interacted_with = [x for x in self.user.interacted_with[5] if x != self.item.id]
-        length = len(interacted_with)
-        if length != 0:
-            sim = 0.0
-            for i in interacted_with:
-                if items[i].clevel == self.item.clevel:
-                    sim += 1
-            return sim/len(interacted_with)
-        else:
-            return 0.0
-
-    def interaction5_disc(self, items):
-        interacted_with = [x for x in self.user.interacted_with[5] if x != self.item.id]
-        length = len(interacted_with)
-        if length != 0:
-            sim = 0.0
-            for i in interacted_with:
-                if items[i].disc == self.item.disc:
-                    sim += 1
-            return sim/len(interacted_with)
-        else:
-            return 0.0
-
-    def interaction5_indus(self, items):
-        interacted_with = [x for x in self.user.interacted_with[5] if x != self.item.id]
-        length = len(interacted_with)
-        if length != 0:
-            sim = 0.0
-            for i in interacted_with:
-                if items[i].indus == self.item.indus:
-                    sim += 1
-            return sim/len(interacted_with)
-        else:
-            return 0.0
-
-    def interaction5_region(self, items):
-        interacted_with = [x for x in self.user.interacted_with[5] if x != self.item.id]
-        length = len(interacted_with)
-        if length != 0:
-            sim = 0.0
-            for i in interacted_with:
-                if items[i].region == self.item.region:
-                    sim += 1
-            return sim/len(interacted_with)
-        else:
-            return 0.0
-
-    def interaction5_country(self, items):
-        interacted_with = [x for x in self.user.interacted_with[5] if x != self.item.id]
-        length = len(interacted_with)
-        if length != 0:
-            sim = 0.0
-            for i in interacted_with:
-                if items[i].country == self.item.country:
-                    sim += 1
-            return sim/len(interacted_with)
-        else:
-            return 0.0
-
-    def interaction5_etype(self, items):
-        interacted_with = [x for x in self.user.interacted_with[5] if x != self.item.id]
-        length = len(interacted_with)
-        if length != 0:
-            sim = 0.0
-            for i in interacted_with:
-                if items[i].etype == self.item.etype:
-                    sim += 1
-            return sim/len(interacted_with)
-        else:
-            return 0.0
-
-    def interaction5_distance(self, items):
-        interacted_with = [x for x in self.user.interacted_with[5] if x != self.item.id and items[x].lat is not None and items[x].lon is not None]
-        length = len(interacted_with)
-        if length != 0 and self.item.lat is not None and self.item.lon is not None:
-            sim = 0.0
-            (lat1, lon1) = (self.item.lat, self.item.lon)
-            radius = 6371
-            for i in interacted_with:
-                (lat2, lon2) = (items[i].lat, items[i].lon)
-                dlat = math.radians(lat2-lat1)
-                dlon = math.radians(lon2-lon1)
-                a = math.sin(dlat/2) * math.sin(dlat/2) + math.cos(math.radians(lat1)) \
-                    * math.cos(math.radians(lat2)) * math.sin(dlon/2) * math.sin(dlon/2)
-                sim += radius * (2 * math.atan2(math.sqrt(a), math.sqrt(1-a)))
-            return sim/len(interacted_with)
-        else:
-            return 100000.0
-
-    def interaction5_clevel_change(self, items):
-        interacted_with = [x for x in self.user.interacted_with[5] if x != self.item.id]
-        length = len(interacted_with)
-        if length != 0:
-            sim = 0.0
-            for i in interacted_with:
-                sim += ((items[i].clevel - self.item.clevel)/10)+0.5
-            return sim/len(interacted_with)
-        else:
-            return 0.5
-
-
-    ### Temporal interactions #################################################
-
-    def recent0_titletags(self, items):
-        interacted_with = [x for x in self.user.interacted_with[0] if x != self.item.id]
-        if len(interacted_with) != 0:
-            intersect = set(self.item.title)
-            interact = items[interacted_with[0]]
-            return len(intersect.intersection(interact.tags))/(len(intersect.union(interact.tags))+1)
-        return 0.0
-
-    def recent0_tagstitle(self, items):
-        interacted_with = [x for x in self.user.interacted_with[0] if x != self.item.id]
-        if len(interacted_with) != 0:
-            intersect = set(self.item.tags)
-            interact = items[interacted_with[0]]
-            return len(intersect.intersection(interact.title))/(len(intersect.union(interact.title))+1)
-        else:
-            return 0.0
-
-    def recent0_titletitle(self, items):
-        interacted_with = [x for x in self.user.interacted_with[0] if x != self.item.id]
-        if len(interacted_with) != 0:
-            intersect = set(self.item.title)
-            interact = items[interacted_with[0]]
-            return len(intersect.intersection(interact.title))/(len(intersect.union(interact.title))+1)
-        return 0.0
-
-    def recent0_tagstags(self, items):
-        interacted_with = [x for x in self.user.interacted_with[0] if x != self.item.id]
-        if len(interacted_with) != 0:
-            intersect = set(self.item.tags)
-            interact = items[interacted_with[0]]
-            return len(intersect.intersection(interact.tags))/(len(intersect.union(interact.tags))+1)
-        else:
-            return 0.0
-
-    def recent0_clevel(self, items):
-        interacted_with = [x for x in self.user.interacted_with[0] if x != self.item.id]
-        if len(interacted_with) != 0:
+    def interaction_features(self, items):
+        features = [0]*144
+        itemtags = set(self.item.tags)
+        itemtitle = set(self.item.title)
+        for i_type in range(6):
+            interacted_with = [x for x in self.user.interacted_with[i_type] if x != self.item.id]
+            length = len(interacted_with)
+            if length == 0:
+                continue
+            features[72+0+12*i_type] = len(itemtags.intersection(items[interacted_with[0]].tags))
+            features[72+1+12*i_type] = len(itemtags.intersection(items[interacted_with[0]].title))
+            features[72+2+12*i_type] = len(itemtitle.intersection(items[interacted_with[0]].tags))
+            features[72+3+12*i_type] = len(itemtitle.intersection(items[interacted_with[0]].title))
             if items[interacted_with[0]].clevel == self.item.clevel:
-                return 1.0
-            else:
-                return 0.0
-        else:
-            return 0.0
-
-    def recent0_disc(self, items):
-        interacted_with = [x for x in self.user.interacted_with[0] if x != self.item.id]
-        if len(interacted_with) != 0:
+                features[72+4+12*i_type] = 1
             if items[interacted_with[0]].disc == self.item.disc:
-                return 1.0
-            else:
-                return 0.0
-        else:
-            return 0.0
-
-    def recent0_indus(self, items):
-        interacted_with = [x for x in self.user.interacted_with[0] if x != self.item.id]
-        if len(interacted_with) != 0:
+                features[72+5+12*i_type] = 1
             if items[interacted_with[0]].indus == self.item.indus:
-                return 1.0
-            else:
-                return 0.0
-        else:
-            return 0.0
-
-    def recent0_region(self, items):
-        interacted_with = [x for x in self.user.interacted_with[0] if x != self.item.id]
-        if len(interacted_with) != 0:
+                features[72+6+12*i_type] = 1
             if items[interacted_with[0]].region == self.item.region:
-                return 1.0
-            else:
-                return 0.0
-        else:
-            return 0.0
-
-    def recent0_country(self, items):
-        interacted_with = [x for x in self.user.interacted_with[0] if x != self.item.id]
-        if len(interacted_with) != 0:
+                features[72+7+12*i_type] = 1
             if items[interacted_with[0]].country == self.item.country:
-                return 1.0
-            else:
-                return 0.0
-        else:
-            return 0.0
-
-    def recent0_etype(self, items):
-        interacted_with = [x for x in self.user.interacted_with[0] if x != self.item.id]
-        if len(interacted_with) != 0:
+                features[72+8+12*i_type] = 1
             if items[interacted_with[0]].etype == self.item.etype:
-                return 1.0
-            else:
-                return 0.0
-        else:
-            return 0.0
+                features[72+9+12*i_type] = 1
+            features[72+10+12*i_type] = items[interacted_with[0]].clevel - self.item.clevel
+            features[72+11+12*i_type] = int(self.distance((self.item.lat, self.item.lon), (items[interacted_with[0]].lat, items[interacted_with[0]].lon)))
+            for i in range(12):
+                features[i + 12*i_type] = features[72+ i + 12*i_type]
+            for i in interacted_with[1:]:
+                features[0 + 12*i_type] += len(itemtags.intersection(items[i].tags))
+                features[1 + 12*i_type] += len(itemtitle.intersection(items[i].tags))
+                features[2 + 12*i_type] += len(itemtags.intersection(items[i].title))
+                features[3 + 12*i_type] += len(itemtitle.intersection(items[i].title))
+                if items[i].clevel == self.item.clevel:
+                    features[4 + 12*i_type] += 1
+                if items[i].disc == self.item.disc:
+                    features[5 + 12*i_type] += 1
+                if items[i].indus == self.item.indus:
+                    features[6 + 12*i_type] += 1
+                if items[i].region == self.item.region:
+                    features[7 + 12*i_type] += 1
+                if items[i].country == self.item.country:
+                    features[8 + 12*i_type] += 1
+                if items[i].etype == self.item.etype:
+                    features[9 + 12*i_type] += 1
+                features[10 + 12*i_type] += items[i].clevel - self.item.clevel
+                features[11 + 12*i_type] += int(self.distance((self.item.lat, self.item.lon), (items[i].lat, items[i].lon)))
 
-    def recent0_distance(self, items):
-        interacted_with = [x for x in self.user.interacted_with[0] if x != self.item.id and items[x].lat is not None and items[x].lon is not None]
-        if len(interacted_with) != 0 and self.item.lat is not None and self.item.lon is not None:
-            (lat1, lon1) = (self.item.lat, self.item.lon)
-            radius = 6371
-            (lat2, lon2) = (items[interacted_with[0]].lat, items[interacted_with[0]].lon)
-            dlat = math.radians(lat2-lat1)
-            dlon = math.radians(lon2-lon1)
-            a = math.sin(dlat/2) * math.sin(dlat/2) + math.cos(math.radians(lat1)) \
-                * math.cos(math.radians(lat2)) * math.sin(dlon/2) * math.sin(dlon/2)
-            return radius * (2 * math.atan2(math.sqrt(a), math.sqrt(1-a)))
-        else:
-            return 100000.0
+        return features
 
-    def recent0_clevel_change(self, items):
-        interacted_with = [x for x in self.user.interacted_with[0] if x != self.item.id]
-        if len(interacted_with) != 0:
-            return ((items[interacted_with[0]].clevel - self.item.clevel)/10)+0.5
-        else:
-            return 0.5
+    def distance(self, start, end):
+        (lat1, lon1) = (start[0], start[1])
+        (lat2, lon2) = (end[0], end[1])
+        if None in start or None in end:
+            return 1000.0
+        x = (lon2 - lon1) * math.cos(0.5*(lat2+lat1))
+        y = lat2 - lat1
+        return 6371 * math.sqrt(x*x + y*y)
 
-    def recent1_titletags(self, items):
-        interacted_with = [x for x in self.user.interacted_with[1] if x != self.item.id]
-        if len(interacted_with) != 0:
-            intersect = set(self.item.title)
-            interact = items[interacted_with[0]]
-            return len(intersect.intersection(interact.tags))/(len(intersect.union(interact.tags))+1)
-        return 0.0
 
-    def recent1_tagstitle(self, items):
-        interacted_with = [x for x in self.user.interacted_with[1] if x != self.item.id]
-        if len(interacted_with) != 0:
-            intersect = set(self.item.tags)
-            interact = items[interacted_with[0]]
-            return len(intersect.intersection(interact.title))/(len(intersect.union(interact.title))+1)
-        else:
-            return 0.0
-
-    def recent1_titletitle(self, items):
-        interacted_with = [x for x in self.user.interacted_with[1] if x != self.item.id]
-        if len(interacted_with) != 0:
-            intersect = set(self.item.title)
-            interact = items[interacted_with[0]]
-            return len(intersect.intersection(interact.title))/(len(intersect.union(interact.title))+1)
-        return 0.0
-
-    def recent1_tagstags(self, items):
-        interacted_with = [x for x in self.user.interacted_with[1] if x != self.item.id]
-        if len(interacted_with) != 0:
-            intersect = set(self.item.tags)
-            interact = items[interacted_with[0]]
-            return len(intersect.intersection(interact.tags))/(len(intersect.union(interact.tags))+1)
-        else:
-            return 0.0
-
-    def recent1_clevel(self, items):
-        interacted_with = [x for x in self.user.interacted_with[1] if x != self.item.id]
-        if len(interacted_with) != 0:
-            if items[interacted_with[0]].clevel == self.item.clevel:
-                return 1.0
-            else:
-                return 0.0
-        else:
-            return 0.0
-
-    def recent1_disc(self, items):
-        interacted_with = [x for x in self.user.interacted_with[1] if x != self.item.id]
-        if len(interacted_with) != 0:
-            if items[interacted_with[0]].disc == self.item.disc:
-                return 1.0
-            else:
-                return 0.0
-        else:
-            return 0.0
-
-    def recent1_indus(self, items):
-        interacted_with = [x for x in self.user.interacted_with[1] if x != self.item.id]
-        if len(interacted_with) != 0:
-            if items[interacted_with[0]].indus == self.item.indus:
-                return 1.0
-            else:
-                return 0.0
-        else:
-            return 0.0
-
-    def recent1_region(self, items):
-        interacted_with = [x for x in self.user.interacted_with[1] if x != self.item.id]
-        if len(interacted_with) != 0:
-            if items[interacted_with[0]].region == self.item.region:
-                return 1.0
-            else:
-                return 0.0
-        else:
-            return 0.0
-
-    def recent1_country(self, items):
-        interacted_with = [x for x in self.user.interacted_with[1] if x != self.item.id]
-        if len(interacted_with) != 0:
-            if items[interacted_with[0]].country == self.item.country:
-                return 1.0
-            else:
-                return 0.0
-        else:
-            return 0.0
-
-    def recent1_etype(self, items):
-        interacted_with = [x for x in self.user.interacted_with[1] if x != self.item.id]
-        if len(interacted_with) != 0:
-            if items[interacted_with[0]].etype == self.item.etype:
-                return 1.0
-            else:
-                return 0.0
-        else:
-            return 0.0
-
-    def recent1_distance(self, items):
-        interacted_with = [x for x in self.user.interacted_with[1] if x != self.item.id and items[x].lat is not None and items[x].lon is not None]
-        if len(interacted_with) != 0 and self.item.lat is not None and self.item.lon is not None:
-            (lat1, lon1) = (self.item.lat, self.item.lon)
-            radius = 6371
-            (lat2, lon2) = (items[interacted_with[0]].lat, items[interacted_with[0]].lon)
-            dlat = math.radians(lat2-lat1)
-            dlon = math.radians(lon2-lon1)
-            a = math.sin(dlat/2) * math.sin(dlat/2) + math.cos(math.radians(lat1)) \
-                * math.cos(math.radians(lat2)) * math.sin(dlon/2) * math.sin(dlon/2)
-            return radius * (2 * math.atan2(math.sqrt(a), math.sqrt(1-a)))
-        else:
-            return 100000.0
-
-    def recent1_clevel_change(self, items):
-        interacted_with = [x for x in self.user.interacted_with[1] if x != self.item.id]
-        if len(interacted_with) != 0:
-            return ((items[interacted_with[0]].clevel - self.item.clevel)/10)+0.5
-        else:
-            return 0.5
-
-    def recent2_titletags(self, items):
-        interacted_with = [x for x in self.user.interacted_with[2] if x != self.item.id]
-        if len(interacted_with) != 0:
-            intersect = set(self.item.title)
-            interact = items[interacted_with[0]]
-            return len(intersect.intersection(interact.tags))/(len(intersect.union(interact.tags))+1)
-        return 0.0
-
-    def recent2_tagstitle(self, items):
-        interacted_with = [x for x in self.user.interacted_with[2] if x != self.item.id]
-        if len(interacted_with) != 0:
-            intersect = set(self.item.tags)
-            interact = items[interacted_with[0]]
-            return len(intersect.intersection(interact.title))/(len(intersect.union(interact.title))+1)
-        else:
-            return 0.0
-
-    def recent2_titletitle(self, items):
-        interacted_with = [x for x in self.user.interacted_with[2] if x != self.item.id]
-        if len(interacted_with) != 0:
-            intersect = set(self.item.title)
-            interact = items[interacted_with[0]]
-            return len(intersect.intersection(interact.title))/(len(intersect.union(interact.title))+1)
-        return 0.0
-
-    def recent2_tagstags(self, items):
-        interacted_with = [x for x in self.user.interacted_with[2] if x != self.item.id]
-        if len(interacted_with) != 0:
-            intersect = set(self.item.tags)
-            interact = items[interacted_with[0]]
-            return len(intersect.intersection(interact.tags))/(len(intersect.union(interact.tags))+1)
-        else:
-            return 0.0
-
-    def recent2_clevel(self, items):
-        interacted_with = [x for x in self.user.interacted_with[2] if x != self.item.id]
-        if len(interacted_with) != 0:
-            if items[interacted_with[0]].clevel == self.item.clevel:
-                return 1.0
-            else:
-                return 0.0
-        else:
-            return 0.0
-
-    def recent2_disc(self, items):
-        interacted_with = [x for x in self.user.interacted_with[2] if x != self.item.id]
-        if len(interacted_with) != 0:
-            if items[interacted_with[0]].disc == self.item.disc:
-                return 1.0
-            else:
-                return 0.0
-        else:
-            return 0.0
-
-    def recent2_indus(self, items):
-        interacted_with = [x for x in self.user.interacted_with[2] if x != self.item.id]
-        if len(interacted_with) != 0:
-            if items[interacted_with[0]].indus == self.item.indus:
-                return 1.0
-            else:
-                return 0.0
-        else:
-            return 0.0
-
-    def recent2_region(self, items):
-        interacted_with = [x for x in self.user.interacted_with[2] if x != self.item.id]
-        if len(interacted_with) != 0:
-            if items[interacted_with[0]].region == self.item.region:
-                return 1.0
-            else:
-                return 0.0
-        else:
-            return 0.0
-
-    def recent2_country(self, items):
-        interacted_with = [x for x in self.user.interacted_with[2] if x != self.item.id]
-        if len(interacted_with) != 0:
-            if items[interacted_with[0]].country == self.item.country:
-                return 1.0
-            else:
-                return 0.0
-        else:
-            return 0.0
-
-    def recent2_etype(self, items):
-        interacted_with = [x for x in self.user.interacted_with[2] if x != self.item.id]
-        if len(interacted_with) != 0:
-            if items[interacted_with[0]].etype == self.item.etype:
-                return 1.0
-            else:
-                return 0.0
-        else:
-            return 0.0
-
-    def recent2_distance(self, items):
-        interacted_with = [x for x in self.user.interacted_with[2] if x != self.item.id and items[x].lat is not None and items[x].lon is not None]
-        if len(interacted_with) != 0 and self.item.lat is not None and self.item.lon is not None:
-            (lat1, lon1) = (self.item.lat, self.item.lon)
-            radius = 6371
-            (lat2, lon2) = (items[interacted_with[0]].lat, items[interacted_with[0]].lon)
-            dlat = math.radians(lat2-lat1)
-            dlon = math.radians(lon2-lon1)
-            a = math.sin(dlat/2) * math.sin(dlat/2) + math.cos(math.radians(lat1)) \
-                * math.cos(math.radians(lat2)) * math.sin(dlon/2) * math.sin(dlon/2)
-            return radius * (2 * math.atan2(math.sqrt(a), math.sqrt(1-a)))
-        else:
-            return 100000.0
-
-    def recent2_clevel_change(self, items):
-        interacted_with = [x for x in self.user.interacted_with[2] if x != self.item.id]
-        if len(interacted_with) != 0:
-            return ((items[interacted_with[0]].clevel - self.item.clevel)/10)+0.5
-        else:
-            return 0.5
-
-    def recent3_titletags(self, items):
-        interacted_with = [x for x in self.user.interacted_with[3] if x != self.item.id]
-        if len(interacted_with) != 0:
-            intersect = set(self.item.title)
-            interact = items[interacted_with[0]]
-            return len(intersect.intersection(interact.tags))/(len(intersect.union(interact.tags))+1)
-        return 0.0
-
-    def recent3_tagstitle(self, items):
-        interacted_with = [x for x in self.user.interacted_with[3] if x != self.item.id]
-        if len(interacted_with) != 0:
-            intersect = set(self.item.tags)
-            interact = items[interacted_with[0]]
-            return len(intersect.intersection(interact.title))/(len(intersect.union(interact.title))+1)
-        else:
-            return 0.0
-
-    def recent3_titletitle(self, items):
-        interacted_with = [x for x in self.user.interacted_with[3] if x != self.item.id]
-        if len(interacted_with) != 0:
-            intersect = set(self.item.title)
-            interact = items[interacted_with[0]]
-            return len(intersect.intersection(interact.title))/(len(intersect.union(interact.title))+1)
-        return 0.0
-
-    def recent3_tagstags(self, items):
-        interacted_with = [x for x in self.user.interacted_with[3] if x != self.item.id]
-        if len(interacted_with) != 0:
-            intersect = set(self.item.tags)
-            interact = items[interacted_with[0]]
-            return len(intersect.intersection(interact.tags))/(len(intersect.union(interact.tags))+1)
-        else:
-            return 0.0
-
-    def recent3_clevel(self, items):
-        interacted_with = [x for x in self.user.interacted_with[3] if x != self.item.id]
-        if len(interacted_with) != 0:
-            if items[interacted_with[0]].clevel == self.item.clevel:
-                return 1.0
-            else:
-                return 0.0
-        else:
-            return 0.0
-
-    def recent3_disc(self, items):
-        interacted_with = [x for x in self.user.interacted_with[3] if x != self.item.id]
-        if len(interacted_with) != 0:
-            if items[interacted_with[0]].disc == self.item.disc:
-                return 1.0
-            else:
-                return 0.0
-        else:
-            return 0.0
-
-    def recent3_indus(self, items):
-        interacted_with = [x for x in self.user.interacted_with[3] if x != self.item.id]
-        if len(interacted_with) != 0:
-            if items[interacted_with[0]].indus == self.item.indus:
-                return 1.0
-            else:
-                return 0.0
-        else:
-            return 0.0
-
-    def recent3_region(self, items):
-        interacted_with = [x for x in self.user.interacted_with[3] if x != self.item.id]
-        if len(interacted_with) != 0:
-            if items[interacted_with[0]].region == self.item.region:
-                return 1.0
-            else:
-                return 0.0
-        else:
-            return 0.0
-
-    def recent3_country(self, items):
-        interacted_with = [x for x in self.user.interacted_with[3] if x != self.item.id]
-        if len(interacted_with) != 0:
-            if items[interacted_with[0]].country == self.item.country:
-                return 1.0
-            else:
-                return 0.0
-        else:
-            return 0.0
-
-    def recent3_etype(self, items):
-        interacted_with = [x for x in self.user.interacted_with[3] if x != self.item.id]
-        if len(interacted_with) != 0:
-            if items[interacted_with[0]].etype == self.item.etype:
-                return 1.0
-            else:
-                return 0.0
-        else:
-            return 0.0
-
-    def recent3_distance(self, items):
-        interacted_with = [x for x in self.user.interacted_with[3] if x != self.item.id and items[x].lat is not None and items[x].lon is not None]
-        if len(interacted_with) != 0 and self.item.lat is not None and self.item.lon is not None:
-            (lat1, lon1) = (self.item.lat, self.item.lon)
-            radius = 6371
-            (lat2, lon2) = (items[interacted_with[0]].lat, items[interacted_with[0]].lon)
-            dlat = math.radians(lat2-lat1)
-            dlon = math.radians(lon2-lon1)
-            a = math.sin(dlat/2) * math.sin(dlat/2) + math.cos(math.radians(lat1)) \
-                * math.cos(math.radians(lat2)) * math.sin(dlon/2) * math.sin(dlon/2)
-            return radius * (2 * math.atan2(math.sqrt(a), math.sqrt(1-a)))
-        else:
-            return 100000.0
-
-    def recent3_clevel_change(self, items):
-        interacted_with = [x for x in self.user.interacted_with[3] if x != self.item.id]
-        if len(interacted_with) != 0:
-            return ((items[interacted_with[0]].clevel - self.item.clevel)/10)+0.5
-        else:
-            return 0.5
-
-    def recent4_titletags(self, items):
-        interacted_with = [x for x in self.user.interacted_with[4] if x != self.item.id]
-        if len(interacted_with) != 0:
-            intersect = set(self.item.title)
-            interact = items[interacted_with[0]]
-            return len(intersect.intersection(interact.tags))/(len(intersect.union(interact.tags))+1)
-        return 0.0
-
-    def recent4_tagstitle(self, items):
-        interacted_with = [x for x in self.user.interacted_with[4] if x != self.item.id]
-        if len(interacted_with) != 0:
-            intersect = set(self.item.tags)
-            interact = items[interacted_with[0]]
-            return len(intersect.intersection(interact.title))/(len(intersect.union(interact.title))+1)
-        else:
-            return 0.0
-
-    def recent4_titletitle(self, items):
-        interacted_with = [x for x in self.user.interacted_with[4] if x != self.item.id]
-        if len(interacted_with) != 0:
-            intersect = set(self.item.title)
-            interact = items[interacted_with[0]]
-            return len(intersect.intersection(interact.title))/(len(intersect.union(interact.title))+1)
-        return 0.0
-
-    def recent4_tagstags(self, items):
-        interacted_with = [x for x in self.user.interacted_with[4] if x != self.item.id]
-        if len(interacted_with) != 0:
-            intersect = set(self.item.tags)
-            interact = items[interacted_with[0]]
-            return len(intersect.intersection(interact.tags))/(len(intersect.union(interact.tags))+1)
-        else:
-            return 0.0
-
-    def recent4_clevel(self, items):
-        interacted_with = [x for x in self.user.interacted_with[4] if x != self.item.id]
-        if len(interacted_with) != 0:
-            if items[interacted_with[0]].clevel == self.item.clevel:
-                return 1.0
-            else:
-                return 0.0
-        else:
-            return 0.0
-
-    def recent4_disc(self, items):
-        interacted_with = [x for x in self.user.interacted_with[4] if x != self.item.id]
-        if len(interacted_with) != 0:
-            if items[interacted_with[0]].disc == self.item.disc:
-                return 1.0
-            else:
-                return 0.0
-        else:
-            return 0.0
-
-    def recent4_indus(self, items):
-        interacted_with = [x for x in self.user.interacted_with[4] if x != self.item.id]
-        if len(interacted_with) != 0:
-            if items[interacted_with[0]].indus == self.item.indus:
-                return 1.0
-            else:
-                return 0.0
-        else:
-            return 0.0
-
-    def recent4_region(self, items):
-        interacted_with = [x for x in self.user.interacted_with[4] if x != self.item.id]
-        if len(interacted_with) != 0:
-            if items[interacted_with[0]].region == self.item.region:
-                return 1.0
-            else:
-                return 0.0
-        else:
-            return 0.0
-
-    def recent4_country(self, items):
-        interacted_with = [x for x in self.user.interacted_with[4] if x != self.item.id]
-        if len(interacted_with) != 0:
-            if items[interacted_with[0]].country == self.item.country:
-                return 1.0
-            else:
-                return 0.0
-        else:
-            return 0.0
-
-    def recent4_etype(self, items):
-        interacted_with = [x for x in self.user.interacted_with[4] if x != self.item.id]
-        if len(interacted_with) != 0:
-            if items[interacted_with[0]].etype == self.item.etype:
-                return 1.0
-            else:
-                return 0.0
-        else:
-            return 0.0
-
-    def recent4_distance(self, items):
-        interacted_with = [x for x in self.user.interacted_with[4] if x != self.item.id and items[x].lat is not None and items[x].lon is not None]
-        if len(interacted_with) != 0 and self.item.lat is not None and self.item.lon is not None:
-            (lat1, lon1) = (self.item.lat, self.item.lon)
-            radius = 6371
-            (lat2, lon2) = (items[interacted_with[0]].lat, items[interacted_with[0]].lon)
-            dlat = math.radians(lat2-lat1)
-            dlon = math.radians(lon2-lon1)
-            a = math.sin(dlat/2) * math.sin(dlat/2) + math.cos(math.radians(lat1)) \
-                * math.cos(math.radians(lat2)) * math.sin(dlon/2) * math.sin(dlon/2)
-            return radius * (2 * math.atan2(math.sqrt(a), math.sqrt(1-a)))
-        else:
-            return 100000.0
-
-    def recent4_clevel_change(self, items):
-        interacted_with = [x for x in self.user.interacted_with[4] if x != self.item.id]
-        if len(interacted_with) != 0:
-            return ((items[interacted_with[0]].clevel - self.item.clevel)/10)+0.5
-        else:
-            return 0.5
-
-    def recent5_titletags(self, items):
-        interacted_with = [x for x in self.user.interacted_with[5] if x != self.item.id]
-        if len(interacted_with) != 0:
-            intersect = set(self.item.title)
-            interact = items[interacted_with[0]]
-            return len(intersect.intersection(interact.tags))/(len(intersect.union(interact.tags))+1)
-        return 0.0
-
-    def recent5_tagstitle(self, items):
-        interacted_with = [x for x in self.user.interacted_with[5] if x != self.item.id]
-        if len(interacted_with) != 0:
-            intersect = set(self.item.tags)
-            interact = items[interacted_with[0]]
-            return len(intersect.intersection(interact.title))/(len(intersect.union(interact.title))+1)
-        else:
-            return 0.0
-
-    def recent5_titletitle(self, items):
-        interacted_with = [x for x in self.user.interacted_with[5] if x != self.item.id]
-        if len(interacted_with) != 0:
-            intersect = set(self.item.title)
-            interact = items[interacted_with[0]]
-            return len(intersect.intersection(interact.title))/(len(intersect.union(interact.title))+1)
-        return 0.0
-
-    def recent5_tagstags(self, items):
-        interacted_with = [x for x in self.user.interacted_with[5] if x != self.item.id]
-        if len(interacted_with) != 0:
-            intersect = set(self.item.tags)
-            interact = items[interacted_with[0]]
-            return len(intersect.intersection(interact.tags))/(len(intersect.union(interact.tags))+1)
-        else:
-            return 0.0
-
-    def recent5_clevel(self, items):
-        interacted_with = [x for x in self.user.interacted_with[5] if x != self.item.id]
-        if len(interacted_with) != 0:
-            if items[interacted_with[0]].clevel == self.item.clevel:
-                return 1.0
-            else:
-                return 0.0
-        else:
-            return 0.0
-
-    def recent5_disc(self, items):
-        interacted_with = [x for x in self.user.interacted_with[5] if x != self.item.id]
-        if len(interacted_with) != 0:
-            if items[interacted_with[0]].disc == self.item.disc:
-                return 1.0
-            else:
-                return 0.0
-        else:
-            return 0.0
-
-    def recent5_indus(self, items):
-        interacted_with = [x for x in self.user.interacted_with[5] if x != self.item.id]
-        if len(interacted_with) != 0:
-            if items[interacted_with[0]].indus == self.item.indus:
-                return 1.0
-            else:
-                return 0.0
-        else:
-            return 0.0
-
-    def recent5_region(self, items):
-        interacted_with = [x for x in self.user.interacted_with[5] if x != self.item.id]
-        if len(interacted_with) != 0:
-            if items[interacted_with[0]].region == self.item.region:
-                return 1.0
-            else:
-                return 0.0
-        else:
-            return 0.0
-
-    def recent5_country(self, items):
-        interacted_with = [x for x in self.user.interacted_with[5] if x != self.item.id]
-        if len(interacted_with) != 0:
-            if items[interacted_with[0]].country == self.item.country:
-                return 1.0
-            else:
-                return 0.0
-        else:
-            return 0.0
-
-    def recent5_etype(self, items):
-        interacted_with = [x for x in self.user.interacted_with[5] if x != self.item.id]
-        if len(interacted_with) != 0:
-            if items[interacted_with[0]].etype == self.item.etype:
-                return 1.0
-            else:
-                return 0.0
-        else:
-            return 0.0
-
-    def recent5_distance(self, items):
-        interacted_with = [x for x in self.user.interacted_with[5] if x != self.item.id and items[x].lat is not None and items[x].lon is not None]
-        if len(interacted_with) != 0 and self.item.lat is not None and self.item.lon is not None:
-            (lat1, lon1) = (self.item.lat, self.item.lon)
-            radius = 6371
-            (lat2, lon2) = (items[interacted_with[0]].lat, items[interacted_with[0]].lon)
-            dlat = math.radians(lat2-lat1)
-            dlon = math.radians(lon2-lon1)
-            a = math.sin(dlat/2) * math.sin(dlat/2) + math.cos(math.radians(lat1)) \
-                * math.cos(math.radians(lat2)) * math.sin(dlon/2) * math.sin(dlon/2)
-            return radius * (2 * math.atan2(math.sqrt(a), math.sqrt(1-a)))
-        else:
-            return 100000.0
-
-    def recent5_clevel_change(self, items):
-        interacted_with = [x for x in self.user.interacted_with[5] if x != self.item.id]
-        if len(interacted_with) != 0:
-            return ((items[interacted_with[0]].clevel - self.item.clevel)/10)+0.5
-        else:
-            return 0.5
 
     ### Extended feature set ##########################################
 
     def clevel_change(self):
-            return ((self.user.clevel - self.item.clevel)/10)+0.5
+        return self.user.clevel - self.item.clevel
 
     def title_match(self):
         jobroles = set(self.user.jobroles)
-        return len(jobroles.intersection(self.item.title))/len(jobroles.union(self.item.title))
+        return len(jobroles.intersection(self.item.title))
 
     def tags_match(self):
         jobroles = set(self.user.jobroles)
-        return len(jobroles.intersection(self.item.tags))/len(jobroles.union(self.item.tags))
+        return len(jobroles.intersection(self.item.tags))
 
     def user_clevel(self):
         return self.user.clevel
@@ -1832,7 +307,7 @@ class Interactions:
             return QD/math.sqrt(length)
         else:
             return 0
-
+#
     def inverse_tags_tfidf(self, concept_weights, N):
         length = len(self.user.jobroles)
         if length > 0:
@@ -1885,32 +360,30 @@ class Interactions:
         f_list[157+self.item.etype] = 1
         f_list[161+self.item.region] = 1
         f_list[178+self.country[self.item.country]] = 1
-        f_list[182+self.lat[self.item.lat]] = 1
-        f_list[267+self.lon[self.item.lon]] = 1
+        if self.item.lat in self.lat:
+            f_list[182+self.lat[self.item.lat]] = 1
+        if self.item.lon in self.lon:
+            f_list[267+self.lon[self.item.lon]] = 1
         possible = [0,1,2,3,4,5,6,7,8,9]
         edufos_list = [0]*len(possible)
-        for i in self.user.edufos:
-            if i in possible:
-                edufos_list[possible.index(i)] = 1
+        for i in set(self.user.edufos).intersection(possible):
+            edufos_list[possible.index(i)] = 1
         jobroles_list = [0]*len(self.user_concepts)
-        for i in self.user.jobroles:
-            if i in self.user_concepts:
-                jobroles_list[self.user_concepts[i]] = 1
+        for i in set(self.user.jobroles).intersection(self.user_concepts):
+            jobroles_list[self.user_concepts[i]] = 1
         title_list = [0]*len(self.item_concepts)
-        for i in self.item.title:
-            if i in self.item_concepts:
-                title_list[self.item_concepts[i]] = 1
+        for i in set(self.item.title).intersection(self.item_concepts):
+            title_list[self.item_concepts[i]] = 1
         tags_list = [0]*len(self.item_concepts)
-        for i in self.item.tags:
-            if i in self.item_concepts:
-                tags_list[self.item_concepts[i]] = 1
+        for i in set(self.item.tags).intersection(self.item_concepts):
+            tags_list[self.item_concepts[i]] = 1
         return (f_list + edufos_list + jobroles_list + title_list + tags_list)
     
     def features(self, items):
-        return self.onehot_features() + [
+        return self.onehot_features() + self.interaction_features(items) + [ 
             self.clevel_match(), self.indus_match(), self.discipline_match(), 
             self.country_match(), self.region_match(), self.clevel_change(),
-            self.title_match(), self.tags_match(), #self.titletags_match(),
+            self.title_match(), self.tags_match(), 1, #self.titletags_match(),
 
             #self.user_clevel(),self.user_disc(),
             #self.user_indus(),self.user_expy(),
@@ -1937,162 +410,6 @@ class Interactions:
             #self.inverse_tags_tfidf(user_cw, user_N),
             #self.inverse_titletags_tfidf(user_cw, user_N),
             #self.inverse_titletags_cbf(user_cw, user_N),
-
-            self.interaction0_titletags(items),
-            self.interaction0_tagstitle(items),
-            self.interaction0_titletitle(items),
-            self.interaction0_tagstags(items),
-            self.interaction0_distance(items),
-            self.interaction0_clevel(items),
-            self.interaction0_disc(items),
-            self.interaction0_indus(items),
-            self.interaction0_region(items),
-            self.interaction0_country(items),
-            self.interaction0_etype(items),
-            self.interaction0_clevel_change(items),
-
-            self.interaction1_titletags(items),
-            self.interaction1_tagstitle(items),
-            self.interaction1_titletitle(items),
-            self.interaction1_tagstags(items),
-            self.interaction1_distance(items),
-            self.interaction1_clevel(items),
-            self.interaction1_disc(items),
-            self.interaction1_indus(items),
-            self.interaction1_region(items),
-            self.interaction1_country(items),
-            self.interaction1_etype(items),
-            self.interaction1_clevel_change(items),
-
-            self.interaction2_titletags(items),
-            self.interaction2_tagstitle(items),
-            self.interaction2_titletitle(items),
-            self.interaction2_tagstags(items),
-            self.interaction2_distance(items),
-            self.interaction2_clevel(items),
-            self.interaction2_disc(items),
-            self.interaction2_indus(items),
-            self.interaction2_region(items),
-            self.interaction2_country(items),
-            self.interaction2_etype(items),
-            self.interaction2_clevel_change(items),
-
-            self.interaction3_titletags(items),
-            self.interaction3_tagstitle(items),
-            self.interaction3_titletitle(items),
-            self.interaction3_tagstags(items),
-            self.interaction3_distance(items),
-            self.interaction3_clevel(items),
-            self.interaction3_disc(items),
-            self.interaction3_indus(items),
-            self.interaction3_region(items),
-            self.interaction3_country(items),
-            self.interaction3_etype(items),
-            self.interaction3_clevel_change(items),
-
-            self.interaction4_titletags(items),
-            self.interaction4_tagstitle(items),
-            self.interaction4_titletitle(items),
-            self.interaction4_tagstags(items),
-            self.interaction4_distance(items),
-            self.interaction4_clevel(items),
-            self.interaction4_disc(items),
-            self.interaction4_indus(items),
-            self.interaction4_region(items),
-            self.interaction4_country(items),
-            self.interaction4_etype(items),
-            self.interaction4_clevel_change(items),
-
-            self.interaction5_titletags(items),
-            self.interaction5_tagstitle(items),
-            self.interaction5_titletitle(items),
-            self.interaction5_tagstags(items),
-            self.interaction5_distance(items),
-            self.interaction5_clevel(items),
-            self.interaction5_disc(items),
-            self.interaction5_indus(items),
-            self.interaction5_region(items),
-            self.interaction5_country(items),
-            self.interaction5_etype(items),
-            self.interaction5_clevel_change(items),
-
-            self.recent0_titletags(items),
-            self.recent0_tagstitle(items),
-            self.recent0_titletitle(items),
-            self.recent0_tagstags(items),
-            self.recent0_distance(items),
-            self.recent0_clevel(items),
-            self.recent0_disc(items),
-            self.recent0_indus(items),
-            self.recent0_region(items),
-            self.recent0_country(items),
-            self.recent0_etype(items),
-            self.recent0_clevel_change(items),
-            
-            self.recent1_titletags(items),
-            self.recent1_tagstitle(items),
-            self.recent1_titletitle(items),
-            self.recent1_tagstags(items),
-            self.recent1_distance(items),
-            self.recent1_clevel(items),
-            self.recent1_disc(items),
-            self.recent1_indus(items),
-            self.recent1_region(items),
-            self.recent1_country(items),
-            self.recent1_etype(items),
-            self.recent1_clevel_change(items),
-
-            self.recent2_titletags(items),
-            self.recent2_tagstitle(items),
-            self.recent2_titletitle(items),
-            self.recent2_tagstags(items),
-            self.recent2_distance(items),
-            self.recent2_clevel(items),
-            self.recent2_disc(items),
-            self.recent2_indus(items),
-            self.recent2_region(items),
-            self.recent2_country(items),
-            self.recent2_etype(items),
-            self.recent2_clevel_change(items),
-
-            self.recent3_titletags(items),
-            self.recent3_tagstitle(items),
-            self.recent3_titletitle(items),
-            self.recent3_tagstags(items),
-            self.recent3_distance(items),
-            self.recent3_clevel(items),
-            self.recent3_disc(items),
-            self.recent3_indus(items),
-            self.recent3_region(items),
-            self.recent3_country(items),
-            self.recent3_etype(items),
-            self.recent3_clevel_change(items),
-
-            self.recent4_titletags(items),
-            self.recent4_tagstitle(items),
-            self.recent4_titletitle(items),
-            self.recent4_tagstags(items),
-            self.recent4_distance(items),
-            self.recent4_clevel(items),
-            self.recent4_disc(items),
-            self.recent4_indus(items),
-            self.recent4_region(items),
-            self.recent4_country(items),
-            self.recent4_etype(items),
-            self.recent4_clevel_change(items),
-
-            self.recent5_titletags(items),
-            self.recent5_tagstitle(items),
-            self.recent5_titletitle(items),
-            self.recent5_tagstags(items),
-            self.recent5_distance(items),
-            self.recent5_clevel(items),
-            self.recent5_disc(items),
-            self.recent5_indus(items),
-            self.recent5_region(items),
-            self.recent5_country(items),
-            self.recent5_etype(items),
-            self.recent5_clevel_change(items),
         ]
 
     def interaction_weight(self):
@@ -2138,11 +455,11 @@ class Interactions:
                     deleted = True
                     break
             if deleted == True:
-                return 0.0
+                return 0
             else:
-                return 1.0
+                return 1
         else:
-            return 0.0
+            return 0
 
     """
     def label(self): 
@@ -2179,7 +496,7 @@ class Interactions:
         """
 
 def data_dicts():
-    user_concepts_list = [58508,56155,7172,57161,14000,16871,776,162794,169814,
+    item_concepts_list = [58508,56155,7172,57161,14000,16871,776,162794,169814,
                      115127,7619,5694,12801,33204,165466,5087,18378,123244,
                      210327,7989,18386,8906,16368,27808,25769,29688,1177,
                      254053,56355,36078,192748,7875,9979,102508,45957,17761,
@@ -2455,7 +772,7 @@ def data_dicts():
                      579,537,616,775,561,543,684,668,683,690,693,561,545,
                      640,713,669,503,631]
  
-    item_concepts_list = [16031,1732,3517,1606,10605,11396,14119,5235,741,12103,
+    user_concepts_list = [16031,1732,3517,1606,10605,11396,14119,5235,741,12103,
                      4221,5980,7552,732,1608,12078,68538,6285,3041,4937,
                      42832,3878,3392,4178,1513,71342,57766,14756,1270,1651,
                      114965,75560,11948,27678,17608,37772,5005,37724,1252,
@@ -2577,6 +894,11 @@ def data_dicts():
              11.5,11.3,12.0,11.9,10.4,6.7,11.8,10.6,12.5,16.2,12.6,13.3,11.2,
              16.3,13.5,12.8,6.4,15.4,12.3,12.7,13.9,14.0,14.6,13.6,13.2,6.5,
              14.4,15.6,6.3,14.2,6.2,15.5,14.1,14.5,15.0,15.7,15.3]
+    lat_l = set(lat_l)
+    lon_l = set(lon_l)
+    user_concepts_list = set(user_concepts_list)
+    item_concepts_list = set(item_concepts_list)
+
     lat = dict(zip(lat_l, range(len(lat_l))))
     lon = dict(zip(lon_l, range(len(lon_l))))
     user_concepts = dict(zip(user_concepts_list, range(len(user_concepts_list))))

@@ -12,42 +12,84 @@ def cluster(directory):
     (header_users, users) = parser.select(directory + "/users.csv", lambda x: True, parser.build_user, lambda x: int(x[0]))
     (header_items, items) = parser.select(directory + "/items.csv", lambda x: True, parser.build_item, lambda x: int(x[0]))
 
-    (user_values, item_values) = get_attributes(users, items)
-    (mode_users, mode_items) = mode_attributes(user_values, item_values, users, items)    
-    write_values(mode_users, mode_items, header_users, header_items)
+    #(mode_users, mode_items) = mode_attributes(users, items)    
+    #write_values(mode_users, mode_items, header_users, header_items, "mode_users.csv", "mode_items.csv")
+  
+    (mode_users, mode_items) = clustered_attributes(5, users, items)
+    write_values(mode_users, mode_items, header_users, header_items, "k5_clustered_users.csv", "k5_clustered_items.csv")
+    (mode_users, mode_items) = clustered_attributes(10, users, items)
+    write_values(mode_users, mode_items, header_users, header_items, "k10_clustered_users.csv", "k10_clustered_items.csv")
+    (mode_users, mode_items) = clustered_attributes(20, users, items)
+    write_values(mode_users, mode_items, header_users, header_items, "k20_clustered_users.csv", "k20_clustered_items.csv")
+    (mode_users, mode_items) = clustered_attributes(30, users, items)
+    write_values(mode_users, mode_items, header_users, header_items, "k30_clustered_users.csv", "k30_clustered_items.csv")
+    (mode_users, mode_items) = clustered_attributes(50, users, items)
+    write_values(mode_users, mode_items, header_users, header_items, "k50_clustered_users.csv", "k50_clustered_items.csv")
+    (mode_users, mode_items) = clustered_attributes(100, users, items)
+    write_values(mode_users, mode_items, header_users, header_items, "k100_clustered_users.csv", "k100_clustered_items.csv")
+    (mode_users, mode_items) = clustered_attributes(200, users, items)
+    write_values(mode_users, mode_items, header_users, header_items, "k200_clustered_users.csv", "k200_clustered_items.csv")
+    (mode_users, mode_items) = clustered_attributes(300, users, items)
+    write_values(mode_users, mode_items, header_users, header_items, "k300_clustered_users.csv", "k300_clustered_items.csv")
+    (mode_users, mode_items) = clustered_attributes(500, users, items)
+    write_values(mode_users, mode_items, header_users, header_items, "k500_clustered_users.csv", "k500_clustered_items.csv")
+    (mode_users, mode_items) = clustered_attributes(1000, users, items)
+    write_values(mode_users, mode_items, header_users, header_items, "k1000_clustered_users.csv", "k1000_clustered_items.csv")
+    (mode_users, mode_items) = clustered_attributes(2000, users, items)
+    write_values(mode_users, mode_items, header_users, header_items, "k2000_clustered_users.csv", "k2000_clustered_items.csv")
+    (mode_users, mode_items) = clustered_attributes(3000, users, items)
+    write_values(mode_users, mode_items, header_users, header_items, "k3000_clustered_users.csv", "k3000_clustered_items.csv")
+    (mode_users, mode_items) = clustered_attributes(5000, users, items)
+    write_values(mode_users, mode_items, header_users, header_items, "k5000_clustered_users.csv", "k5000_clustered_items.csv")
+    (mode_users, mode_items) = clustered_attributes(10000, users, items)
+    write_values(mode_users, mode_items, header_users, header_items, "k10000_clustered_users.csv", "k10000_clustered_items.csv")
+  
 
-def mode_attributes(user_values, item_values, users, items):
-    user_stats = [[],[],[],[]]
-    item_stats = [[],[],[],[],[],[]]
+def mode_attributes(users, items):
+    user_stats = [[],[],[],[],[],[],[],[],[]]
+    item_stats = [[],[],[],[],[],[],[],[]]
+    cntry = {"de": 1, "at": 2, "ch": 3, "non_dach": 0}
+    inv_cntry = {1: "de", 2: "at", 3: "ch", 0: "non_dach"}
     
     print("Counting values")
-    for user, value in user_values.items():
-        user_stats[0] += [value[1]]
-        user_stats[1] += [value[2]]
-        user_stats[2] += [value[3]]
-        user_stats[3] += [value[7]]
+    for user, value in users.items():
+        user_stats[0] += [value.clevel]
+        user_stats[1] += [value.disc]
+        user_stats[2] += [value.indus]
+        user_stats[3] += [value.expn]
+        user_stats[4] += [value.expy]
+        user_stats[5] += [value.expyc]
+        user_stats[6] += [value.edud]
+        user_stats[7] += [cntry[value.country]]
+        user_stats[8] += [value.region]
 
-    for item, value in item_values.items():
-        item_stats[0] += [value[2]]
-        item_stats[1] += [value[3]]
-        item_stats[2] += [value[4]]
-        item_stats[3] += [value[8]]
-        item_stats[4] += [value[9]]
-        item_stats[5] += [value[10]]
+    for item, value in items.items():
+        item_stats[0] += [value.clevel]
+        item_stats[1] += [value.disc]
+        item_stats[2] += [value.indus]
+        item_stats[3] += [cntry[value.country]]
+        item_stats[4] += [value.region]
+        if value.lat == None:
+            item_stats[5] += [0]
+        else:
+            item_stats[5] += [value.lat]
+        if value.lon == None:
+            item_stats[6] += [0]
+        else:
+            item_stats[6] += [value.lon]
+        item_stats[7] += [value.etype]
 
     print("Finding mode of values")
     for i in range(len(user_stats)):
         filtered = [v for v in user_stats[i] if v != 0]
         data = Counter(filtered)
+        print(data.most_common())
         user_stats[i] = data.most_common()[0][0]
 
     for i in range(len(item_stats)):
         filtered = [v for v in item_stats[i] if v != 0]
         data = Counter(filtered)
         item_stats[i] = data.most_common()[0][0]
-
-    print(user_stats)
-    print(item_stats)
 
     print("altering user and item dataset")
     for user, value in users.items():
@@ -57,8 +99,18 @@ def mode_attributes(user_values, item_values, users, items):
             users[user].disc = user_stats[1]
         if value.indus == 0:
             users[user].indus = user_stats[2]
+        if value.expn == 0:
+            users[user].expn = user_stats[3]
+        if value.expy == 0:
+            users[user].expy = user_stats[4]
+        if value.expyc == 0:
+            users[user].expyc = user_stats[5]
         if value.edud == 0:
-            users[user].edud = user_stats[3]
+            users[user].edud = user_stats[6]
+        if value.country == "non_dach":
+            users[user].country = inv_cntry[user_stats[7]]
+        if value.region == 0:
+            users[user].region = user_stats[8]
 
     for item, value in items.items():
         if value.disc == 0:
@@ -67,78 +119,102 @@ def mode_attributes(user_values, item_values, users, items):
             items[item].indus = item_stats[1]
         if value.clevel == 0:
             items[item].clevel = item_stats[2]
-        if value.lat == 0:
-            items[item].lat = item_stats[3]
-        if value.lon == 0:
-            items[item].lon = item_stats[4]
+        if value.country == "non_dach":
+            items[item].country = inv_cntry[item_stats[3]]
+        if value.region == 0:
+            items[item].region = item_stats[4]
+        if value.lat == None:
+            items[item].lat = item_stats[5]
+        if value.lon == None:
+            items[item].lon = item_stats[6]
         if value.etype == 0:
-            items[item].etype = item_stats[5]
+            items[item].etype = item_stats[7]
 
     return (users, items)
 
-"""
-def clustered_attributes(users, items):
-    #data = np.array([interactions[key].features() for key in interactions.keys()])
-    clevel_uvector = np.array([u.to_vector() for (k,u) in users.items() if not None in u.to_vector()])
-    clevel_ivector = np.array([i.to_vector() for (k,i) in items.items() if not None in i.to_vector()])
 
-    ukmeans100 = KMeans(n_clusters=100, n_jobs=-1).fit(uvector)
-    ukmeans200 = KMeans(n_clusters=200, n_jobs=-1).fit(uvector)
-    ikmeans100 = KMeans(n_clusters=100, n_jobs=-1).fit(ivector)
-    ikmeans200 = KMeans(n_clusters=200, n_jobs=-1).fit(ivector)
-    joblib.dump(ukmeans100, 'ukmeans100.pkl') 
-    joblib.dump(ukmeans200, 'ukmeans200.pkl') 
-    joblib.dump(ikmeans100, 'ikmeans100.pkl') 
-    joblib.dump(ikmeans200, 'ikmeans200.pkl') 
+def clustered_attributes(k, users, items):
+    cntry = {"de": 1, "at": 2, "ch": 3, "non_dach": 0}
+    user_stats = []
+    item_stats = []
 
-    ###clf = joblib.load('filename.pkl')
-    print("--- Clustering: %s seconds ---" % (time.time() - start_time))
-"""
-
-def get_attributes(users, items):
-    user_values = {}
-    item_values = {}
-    c = {"de": 0, "at": 1, "ch": 2, "non_dach": 3}
-
-    print("preprocessing data")
+    print("Counting values Users")
     for user, value in users.items():
-        user_values[user] = []
-        user_values[user] += [value.jobroles]
-        user_values[user] += [value.clevel]
-        user_values[user] += [value.disc]
-        user_values[user] += [value.indus]
-        user_values[user] += [value.expn]
-        user_values[user] += [value.expy]
-        user_values[user] += [value.expyc]
-        user_values[user] += [value.edud]
-        user_values[user] += [value.edufos]
-        user_values[user] += [c[value.country]]
-        user_values[user] += [value.region]
-        user_values[user] += [value.xtcj]
-        user_values[user] += [value.premium]
+        d = [value.clevel, value.disc, value.indus, 
+             value.expn, value.expy, value.expyc, 
+             value.edud, cntry[value.country], value.region]
+        if 0 not in d:
+            user_stats += [d]
 
+    print("Counting values Items")
     for item, value in items.items():
-        item_values[item] = []
-        item_values[item] += [value.title]
-        item_values[item] += [value.tags]
-        item_values[item] += [value.disc]
-        item_values[item] += [value.indus]
-        item_values[item] += [value.clevel]
-        item_values[item] += [c[value.country]]
-        item_values[item] += [value.region]
-        item_values[item] += [value.paid]
-        item_values[item] += [value.lat]
-        item_values[item] += [value.lon]
-        item_values[item] += [value.etype]
-        item_values[item] += [value.time]
+        d = [value.clevel, value.disc, value.indus, 
+             cntry[value.country], value.region,
+             value.lat, value.lon, value.etype]
+        if d[5] == None:
+            d[5] = 0
+        if d[6] == None:
+            d[6] = 0
+        if 0 not in d:
+            item_stats += [d]
 
-    return (user_values, item_values)
+    #data = np.array([interactions[key].features() for key in interactions.keys()])
+    users_vector = np.array(user_stats)
+    items_vector = np.array(item_stats)
 
+    start_time = time.time()
 
+    ucluster5 = KMeans(n_clusters=k, n_jobs=-1, verbose=1).fit(users_vector)
+    icluster5 = KMeans(n_clusters=k, n_jobs=-1, verbose=1).fit(items_vector)
 
-def write_values(users, items, user_header, item_header):
+    print("--- Clustering: %s seconds ---" % (time.time() - start_time))
+
+    finding_time = time.time()
+    ucluster_members = {}
+    icluster_members = {}
+    for i in range(k):
+        ucluster_members[i] = {}
+        icluster_members[i] = {}
+
+    print("Finding cluster groups for users")
+    for u, value in users.items():
+        d = [value.clevel, value.disc, value.indus, 
+             value.expn, value.expy, value.expyc, 
+             value.edud, cntry[value.country], value.region]
+        c = ucluster5.predict(d)
+        ucluster_members[c[0]][u] = value
+
+    print("finding cluster groups for items")
+    for i, value in items.items():
+        d = [value.clevel, value.disc, value.indus, 
+            cntry[value.country], value.region, 
+            value.lat, value.lon, value.etype]
+        if d[5] == None:
+            d[5] = 0
+        if d[6] == None:
+            d[6] = 0
+        c = icluster5.predict(d)
+        icluster_members[c[0]][i] = value
+
+    print("--- Estimating: %s seconds ---" % (time.time() - finding_time))
+
+    estimate_time = time.time()
+    print("Setting values Values")
+    final_users = {}
+    final_items = {}
+    for i in range(k):
+        (mode_users, mode_items) = mode_attributes(ucluster_members[i], icluster_members[i])    
+        s = {**final_users, **mode_users}
+        final_users = s
+        p = {**final_items, **mode_items}
+        final_items = p
+
+    print("--- Estimating: %s seconds ---" % (time.time() - estimate_time))
+    return (final_users, final_items)
+
+def write_values(users, items, user_header, item_header, uname, iname):
     print("writing values")
-    with open("mode_users.csv", "w", newline='') as user_f:
+    with open(uname, "w", newline='') as user_f:
         csvwriter = csv.writer(user_f, delimiter='\t', quoting=csv.QUOTE_NONE)
         line = []
         for h, v in user_header.items():
@@ -163,7 +239,7 @@ def write_values(users, items, user_header, item_header):
             line.append(str(value.premium))
             csvwriter.writerow(line)
 
-    with open("mode_items.csv", "w", newline='') as item_f:
+    with open(iname, "w", newline='') as item_f:
         csvwriter = csv.writer(item_f, delimiter='\t', quoting=csv.QUOTE_NONE)
         line = []
         for h, v in item_header.items():

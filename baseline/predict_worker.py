@@ -21,13 +21,15 @@ def worker(item_ids, target_users, items, users, output_file, bst):
             ids = []
 
             # build all user-feature pairs based for this item
-            for user in target_users:
-                interaction = model.Interactions(users[user], items[item], [], dicts)
-                data += [interaction.features(items)]
-                ids += [user]
+            item_file = "temp/predictor_" + str(item) + ".csv"
+            with open(item_file, "w") as f:
+                for user in target_users:
+                    interaction = model.Interactions(users[user], items[item], [], dicts)
+                    f.write(str(user) + " " + " ".join([str(a) + ":" + str(b) for (a, b) in enumerate(interaction.features(items)) if b != 0]) + "\n")
+                    ids += [user]
 
             # predictions from XGBoost
-            test_matrix = xgb.DMatrix(np.array(data))
+            test_matrix = xgb.DMatrix(item_file)
             pred = bst.predict(test_matrix)
             average_score += sum(pred)
             num_evaluated += float(len(pred))

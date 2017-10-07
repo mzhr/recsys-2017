@@ -23,10 +23,10 @@ def process_header(header):
 def parse_interactions(from_file, users, items):
     interactions = {}
     lc = 0
-    dicts = model.data_dict()
+    dicts = model.data_dicts()
     for line in open(from_file):
         line = [int(a.strip("(),")) for a in line.split()]
-        assert(len(line)%2 == 0)
+        #assert(len(line)%2 == 0)
         keys = tuple(line[:2])
 
         interactions[keys] = model.Interactions(users[keys[0]], items[keys[1]], [], dicts)
