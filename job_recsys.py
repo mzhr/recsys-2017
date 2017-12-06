@@ -5,6 +5,7 @@ from baseline import learner
 
 import argparse
 import time
+import cProfile
 
 def run():
     argparser = argparse.ArgumentParser(description='')
@@ -33,8 +34,8 @@ def run():
 #    else:
 #        cross_validate.fold10(interactions, args.xfold)
 
-    print("--- RecSys Time: %s seconds ---" % (time.time() - start_time))
+    print("--- TOTAL RECSYS TIME: %s SECONDS ---" % (time.time() - start_time))
 
 
 if __name__ == "__main__":
-    run()
+   cProfile.run("run()")

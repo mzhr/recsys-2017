@@ -92,7 +92,7 @@ def build_item(str_item, names):
         float(str_item[names["latitude"]]) if str_item[names["latitude"]] != "null" else None,
         float(str_item[names["longitude"]]) if str_item[names["latitude"]] != "null" else None,
         int(str_item[names["employment"]]),
-        int(str_item[names["created_at"]]) if str_item[names["created_at"]] != "null" else None,
+        int(str_item[names["created_at"]]) if (str_item[names["created_at"]] != "null" and str_item[names["created_at"]] != "None") else None,
     )
 
 

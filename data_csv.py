@@ -750,7 +750,7 @@ def build_visualisations3(directory):
     print("Added Users Values")
     for user, value in users.items():
         cold = 0
-        l = [value.clevel, value.disc, value.indus, value.country, value.region, value.edud]
+        l = [value.clevel, value.disc, value.indus, value.country, value.region, value.expn, value.expy, value.expyc, value.edud]
         for i in l:
             if i == 0 or i is None or i == "non_dach":
                 cold += 1
@@ -1167,3 +1167,63 @@ def bargraph_single(values, labels, title):
 
     plt.tight_layout()
     plt.savefig(title)
+
+def build_itemitemprofile(self, items):
+    users_file = data_directory + "/mode_users.csv"
+    (header_users, users) = parser.select(users_file, lambda x: True, parser.build_user, lambda x: int(x[0]))
+
+    # Parse interacted data
+    print("Parsing interacted with items...")
+    for itype in range(6):
+        for line in open(user_interactions_file + str(itype) + ".csv"):
+            newline = line.split()
+            user = int(newline[0])
+            users[user].interacted_with[itype] = []
+            newline = newline[1:]
+            for i in newline:
+                users[user].interacted_with[itype] += [int(i)]
+
+    print("Building unbuilt interaction lists...")
+    for key, value in users.items():
+        for i in range(6):
+            if i not in users[key].interacted_with:
+                users[key].interacted_with[i] = []
+            if i not in users[key].profile:
+                users[key].profile[i] = {}
+
+    for i_type in range(6):
+        interacted_with = [x for x in self.user.interacted_with[i_type] if x != self.item.id]
+        length = len(interacted_with)
+        if length == 0:
+            continue
+        tags = []
+        title = []
+        clevel = []
+        disc = []
+        indus = []
+        region = []
+        country = []
+        etype = []
+        loc = []
+        for i in interacted_with[1:]:
+            tags += [items[i].tags]
+            title += [items[i].title]
+            clevel += [items[i].clevel]
+            disc += [items[i].disc]
+            indus += [items[i].indus]
+            region += [items[i].region]
+            country += [items[i].country]
+            etype += [items[i].etype]
+            features[10 + 12*i_type] += items[i].clevel - self.item.clevel
+            features[11 + 12*i_type] += int(self.distance((self.item.lat, self.item.lon), (items[i].lat, items[i].lon)))
+
+    return features
+
+def distance(self, start, end):
+    (lat1, lon1) = (start[0], start[1])
+    (lat2, lon2) = (end[0], end[1])
+    if None in start or None in end:
+        return 1000.0
+    x = (lon2 - lon1) * math.cos(0.5*(lat2+lat1))
+    y = lat2 - lat1
+    return 6371 * math.sqrt(x*x + y*y)

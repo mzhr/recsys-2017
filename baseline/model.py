@@ -24,7 +24,6 @@ class User:
         self.region = region
         self.xtcj = xtcj
         self.premium = premium
-        self.CBF_weights = {}
         self.interacted_with = {}
 
 
@@ -44,7 +43,6 @@ class Item:
         self.lon = lon
         self.etype = etype
         self.time = time
-        self.CBF_weights = {}
         self.interacted_with = {}
 
 
@@ -307,7 +305,7 @@ class Interactions:
             return QD/math.sqrt(length)
         else:
             return 0
-#
+
     def inverse_tags_tfidf(self, concept_weights, N):
         length = len(self.user.jobroles)
         if length > 0:

@@ -150,3 +150,14 @@ extended features, and basic matching features, no TH
 {"result":{"score":468,"rank":79,"label":"473984(time-decay)","submitted_at":"2017-08-17T05:48:46.033+02:00"},"is_top_score":false,"remaining_submissions_today":19,"lines_skipped":[990,1981,2972,3963,4954,5945,6936,7927,8918,9909,10900,11891,12882,13873,14864,15855,16846,17837,18828,19819,20810,21801,22792,23783,24774,25765,26756,27747,28738,29729,30720,31711,32702,33693,34684,35675,36666,37657,38648,39639,40630,41621,42612,43603,44594,45585,46576]}
 
 Final but 1018 target items, --- RecSys Time: 130490.0701675415 seconds ---
+{"result":{"score":1353,"rank":78,"label":"test213(time-decay)","submitted_at":"2017-10-11T02:25:07.451+02:00"},"is_top_score":false,"remaining_submissions_today":18,"lines_s
+kipped":[]
+
+mode 
+{"result":{"score":1279,"rank":78,"label":"test42 (time-decay)","submitted_at":"2017-10-11T02:24:27.834+02:00"},"is_top_score":false,"remaining_submissions_today":19,"lines_skipped":[]}
+
+k10000
+{"result":{"score":1288,"rank":78,"label":"test213(time-decay)","submitted_at":"2017-10-23T06:51:41.141+02:00"},"is_top_score":false,"remaining_submissions_today":19,"lines_skipped":[]}(/research/remote/isar/petabyte/users/damiano/recsys-challenge-2017/recsys/) [e34526@rschprdap01 solution]$ rngr
+
+k1000
+{"result":{"score":1167,"rank":78,"label":"test213(time-decay)","submitted_at":"2017-10-25T09:12:38.812+02:00"},"is_top_score":false,"remaining_submissions_today":19,"lines_skipped":[]}
